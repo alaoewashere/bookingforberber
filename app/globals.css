@@ -1,0 +1,18 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --barber-bg: #1a1a1a;
+  --barber-gold: #d4a017;
+}
+
+body {
+  @apply bg-barber-bg text-gray-100 antialiased min-h-screen;
+}
+
+[dir="rtl"] input,
+[dir="rtl"] select,
+[dir="rtl"] textarea {
+  text-align: right;
+}
