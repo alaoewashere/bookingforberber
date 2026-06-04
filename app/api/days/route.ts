@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { getDistinctDates, ensureDaySlots } from "@/lib/appointments";
+import { ensureScheduleDay, getScheduleDays } from "@/lib/schedule-days";
 import { isValidDateParam } from "@/lib/slots";
 
 export async function GET() {
   try {
-    const dates = await getDistinctDates();
-    return NextResponse.json(dates);
+    const days = await getScheduleDays();
+    return NextResponse.json(days);
   } catch (e) {
     return NextResponse.json(
       { error: e instanceof Error ? e.message : "Server error" },
@@ -23,6 +24,7 @@ export async function POST(request: Request) {
   }
 
   try {
+    await ensureScheduleDay(date);
     const appointments = await ensureDaySlots(date);
     return NextResponse.json({ date, appointments });
   } catch (e) {

@@ -2,7 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import DaySchedule from "@/components/DaySchedule";
 import { ensureDaySlots } from "@/lib/appointments";
-import { formatDateLabel, isValidDateParam } from "@/lib/slots";
+import { isValidDateParam } from "@/lib/slots";
+import { getDayLabel } from "@/lib/day-label";
+import { getScheduleDay } from "@/lib/schedule-days";
 import { ar } from "@/lib/i18n/ar";
 
 export const dynamic = "force-dynamic";
@@ -35,13 +37,21 @@ export default async function DayPage({ params }: DayPageProps) {
   const booked = appointments.filter((a) => a.status === "booked").length;
   const other = appointments.length - booked;
 
+  let dayLabel = date;
+  try {
+    const meta = await getScheduleDay(date);
+    dayLabel = getDayLabel(date, meta?.display_name);
+  } catch {
+    dayLabel = getDayLabel(date, null);
+  }
+
   return (
     <div>
       <Link href="/" className="y2k-link-back">
         {ar.day.backDays}
       </Link>
       <div className="mb-6 sm:mb-8">
-        <h1 className="y2k-heading y2k-heading-compact">{formatDateLabel(date)}</h1>
+        <h1 className="y2k-heading y2k-heading-compact">{dayLabel}</h1>
         <p className="mt-2 flex flex-wrap gap-x-2 gap-y-1 y2k-meta">
           <span>{ar.day.hoursRange}</span>
           <span className="hidden text-y2k-gold/40 sm:inline" aria-hidden>

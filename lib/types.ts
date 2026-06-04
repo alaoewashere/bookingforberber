@@ -1,3 +1,8 @@
+export type ScheduleDay = {
+  date: string;
+  display_name: string | null;
+};
+
 export type AppointmentStatus = "available" | "booked" | "blocked";
 
 export interface Appointment {

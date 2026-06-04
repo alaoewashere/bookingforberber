@@ -145,6 +145,44 @@
     @apply w-full rounded-2xl border-[3px] border-y2k-gold/60 bg-y2k-black px-4 py-3 font-bold text-y2k-white outline-none transition placeholder:text-y2k-muted focus:border-y2k-electric focus:ring-2 focus:ring-y2k-electric/25;
   }
 
+  .y2k-date-field {
+    @apply space-y-3;
+  }
+
+  .y2k-date-picker-wrap {
+    @apply relative;
+  }
+
+  .y2k-date-input {
+    @apply y2k-input min-h-12 w-full appearance-none text-base;
+    color-scheme: dark;
+  }
+
+  .y2k-date-input::-webkit-date-and-time-value {
+    min-height: 1.5rem;
+    text-align: start;
+  }
+
+  .y2k-date-input-empty {
+    @apply text-transparent;
+  }
+
+  .y2k-date-placeholder {
+    @apply pointer-events-none absolute inset-y-0 start-4 end-4 flex items-center gap-2 text-sm font-bold text-y2k-muted;
+  }
+
+  .y2k-date-preview {
+    @apply rounded-2xl border-2 border-y2k-gold/50 bg-y2k-black px-4 py-3 text-center;
+  }
+
+  .y2k-date-preview-label {
+    @apply mb-1 block text-xs font-bold text-y2k-muted;
+  }
+
+  .y2k-date-preview-value {
+    @apply text-lg font-black text-y2k-gold;
+  }
+
   .y2k-modal-overlay {
     @apply fixed inset-0 z-50 flex items-end justify-center bg-black/80 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-sm sm:items-center sm:p-4;
   }
@@ -227,6 +265,70 @@
     @apply hidden overflow-x-auto rounded-2xl border-[3px] border-y2k-gold/70 bg-y2k-surface shadow-y2k-dark md:block;
   }
 
+  .y2k-day-table-wrap {
+    @apply overflow-x-auto rounded-2xl border-[3px] border-y2k-gold/70 bg-y2k-surface shadow-y2k-dark;
+  }
+
+  .y2k-admin-cal {
+    @apply y2k-panel space-y-3;
+  }
+
+  .y2k-admin-cal-nav {
+    @apply flex items-center justify-between gap-2;
+  }
+
+  .y2k-admin-cal-month {
+    @apply text-center text-lg font-black text-y2k-gold;
+  }
+
+  .y2k-admin-cal-grid {
+    @apply grid grid-cols-7 gap-1 sm:gap-2;
+  }
+
+  .y2k-admin-cal-weekday {
+    @apply py-1 text-center text-[10px] font-black text-y2k-muted sm:text-xs;
+  }
+
+  .y2k-admin-cal-cell {
+    @apply aspect-square min-h-[2.5rem] sm:min-h-[2.75rem];
+  }
+
+  .y2k-admin-cal-day {
+    @apply flex h-full w-full flex-col items-center justify-center rounded-xl border-2 border-transparent text-sm font-black text-y2k-muted transition sm:text-base;
+  }
+
+  .y2k-admin-cal-day-has {
+    @apply border-y2k-gold/50 bg-y2k-raised text-y2k-white hover:border-y2k-gold;
+  }
+
+  .y2k-admin-cal-day-selected {
+    @apply border-y2k-gold bg-y2k-gold text-y2k-black shadow-y2k-sm;
+  }
+
+  .y2k-admin-cal-day-today {
+    @apply ring-2 ring-y2k-electric ring-offset-2 ring-offset-y2k-surface;
+  }
+
+  .y2k-admin-cal-dot {
+    @apply mt-0.5 h-1 w-1 rounded-full bg-y2k-gold;
+  }
+
+  .y2k-admin-cal-day-selected .y2k-admin-cal-dot {
+    @apply bg-y2k-black;
+  }
+
+  .y2k-admin-day-panel {
+    @apply y2k-panel space-y-4;
+  }
+
+  .y2k-admin-row-booked {
+    @apply bg-y2k-red-dark/25;
+  }
+
+  .y2k-admin-row-available td {
+    @apply text-green-400;
+  }
+
   .y2k-table {
     @apply w-full text-sm;
   }
@@ -253,5 +355,13 @@
 
   .y2k-admin-card {
     @apply rounded-2xl border-[3px] border-y2k-gold/60 bg-y2k-raised p-4 shadow-y2k-dark;
+  }
+
+  .y2k-icon-btn {
+    @apply inline-flex h-9 w-9 items-center justify-center rounded-full border-2 border-y2k-gold/50 bg-y2k-black text-y2k-gold shadow-y2k-sm transition hover:border-y2k-gold hover:bg-y2k-raised hover:text-y2k-gold-light;
+  }
+
+  .y2k-icon-btn-danger {
+    @apply hover:border-y2k-red hover:text-red-300;
   }
 }

@@ -1,15 +1,16 @@
-import { getDistinctDates } from "@/lib/appointments";
+import { getScheduleDays } from "@/lib/schedule-days";
+import type { ScheduleDay } from "@/lib/types";
 import HomeClient from "@/components/HomeClient";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  let dates: string[] = [];
+  let days: ScheduleDay[] = [];
   try {
-    dates = await getDistinctDates();
+    days = await getScheduleDays();
   } catch {
-    dates = [];
+    days = [];
   }
 
-  return <HomeClient dates={dates} />;
+  return <HomeClient initialDays={days} />;
 }

@@ -1,18 +1,51 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { formatDateLabel, todayISO } from "@/lib/slots";
+import { getDayLabel } from "@/lib/day-label";
+import type { ScheduleDay } from "@/lib/types";
 import { ar } from "@/lib/i18n/ar";
 import AddDayModal from "@/components/AddDayModal";
+import EditDayModal from "@/components/EditDayModal";
+import DayCardActions from "@/components/DayCardActions";
 
 interface HomeClientProps {
-  dates: string[];
+  initialDays: ScheduleDay[];
 }
 
-export default function HomeClient({ dates }: HomeClientProps) {
+export default function HomeClient({ initialDays }: HomeClientProps) {
+  const router = useRouter();
+  const [days, setDays] = useState(initialDays);
   const [addOpen, setAddOpen] = useState(false);
+  const [editDay, setEditDay] = useState<ScheduleDay | null>(null);
+  const [deletingDate, setDeletingDate] = useState<string | null>(null);
   const today = todayISO();
+
+  async function handleDelete(date: string) {
+    if (!confirm(ar.home.deleteConfirm)) return;
+
+    setDeletingDate(date);
+    try {
+      const res = await fetch(`/api/days/${date}`, { method: "DELETE" });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? ar.home.deleteFailed);
+      setDays((prev) => prev.filter((d) => d.date !== date));
+      router.refresh();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : ar.home.deleteFailed);
+    } finally {
+      setDeletingDate(null);
+    }
+  }
+
+  function handleSaved(updated: ScheduleDay) {
+    setDays((prev) =>
+      prev.map((d) => (d.date === updated.date ? updated : d))
+    );
+    router.refresh();
+  }
 
   return (
     <>
@@ -31,7 +64,7 @@ export default function HomeClient({ dates }: HomeClientProps) {
         </div>
       </div>
 
-      {dates.length === 0 ? (
+      {days.length === 0 ? (
         <div className="y2k-empty">
           <p className="y2k-empty-text">{ar.home.noDays}</p>
           <button type="button" onClick={() => setAddOpen(true)} className="y2k-btn-ghost mt-4">
@@ -40,21 +73,42 @@ export default function HomeClient({ dates }: HomeClientProps) {
         </div>
       ) : (
         <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {dates.map((date) => (
-            <li key={date}>
-              <Link href={`/day/${date}`} className="y2k-card-interactive">
-                <span className="y2k-card-title">{formatDateLabel(date)}</span>
+          {days.map((day) => (
+            <li key={day.date} className="group relative">
+              <Link
+                href={`/day/${day.date}`}
+                className="y2k-card-interactive block pe-20 sm:pe-20"
+              >
+                <span className="y2k-card-title">{getDayLabel(day.date, day.display_name)}</span>
+                {day.display_name && (
+                  <span className="mt-0.5 block text-xs font-bold text-y2k-muted">
+                    {formatDateLabel(day.date)}
+                  </span>
+                )}
                 <span className="y2k-card-date" dir="ltr">
-                  {date}
+                  {day.date}
                 </span>
-                {date === today && <span className="y2k-pill-tag">{ar.home.today}</span>}
+                {day.date === today && <span className="y2k-pill-tag">{ar.home.today}</span>}
               </Link>
+              <DayCardActions
+                onEdit={() => setEditDay(day)}
+                onDelete={() => handleDelete(day.date)}
+                deleting={deletingDate === day.date}
+                editLabel={ar.home.editDay}
+                deleteLabel={ar.home.deleteDay}
+              />
             </li>
           ))}
         </ul>
       )}
 
       <AddDayModal open={addOpen} onClose={() => setAddOpen(false)} />
+      <EditDayModal
+        day={editDay}
+        open={editDay !== null}
+        onClose={() => setEditDay(null)}
+        onSaved={handleSaved}
+      />
     </>
   );
 }

@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import type { Appointment } from "@/lib/types";
 import { ar } from "@/lib/i18n/ar";
-import AdminTable from "@/components/AdminTable";
+import AdminCalendar from "@/components/AdminCalendar";
 
 interface AdminDashboardProps {
   appointments: Appointment[];
@@ -28,7 +28,7 @@ export default function AdminDashboard({ appointments }: AdminDashboardProps) {
           {ar.admin.logout}
         </button>
       </div>
-      <AdminTable initialAppointments={appointments} />
+      <AdminCalendar initialAppointments={appointments} />
     </div>
   );
 }
