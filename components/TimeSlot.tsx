@@ -14,16 +14,16 @@ const statusStyles: Record<
   { badge: string; card: string }
 > = {
   available: {
-    badge: "bg-emerald-900/60 text-emerald-300 border-emerald-700",
-    card: "border-barber-border bg-barber-surface hover:border-gray-500",
+    badge: "y2k-badge-available",
+    card: "y2k-slot-available",
   },
   booked: {
-    badge: "bg-red-900/60 text-red-300 border-red-700",
-    card: "border-red-900/50 bg-red-950/30",
+    badge: "y2k-badge-booked",
+    card: "y2k-slot-booked",
   },
   blocked: {
-    badge: "bg-amber-900/60 text-amber-300 border-amber-700",
-    card: "border-amber-900/40 bg-amber-950/20 opacity-80",
+    badge: "y2k-badge-blocked",
+    card: "y2k-slot-blocked",
   },
 };
 
@@ -36,37 +36,29 @@ export default function TimeSlot({ appointment, onBook }: TimeSlotProps) {
       type="button"
       onClick={() => canBook && onBook(appointment)}
       disabled={!canBook}
-      className={`flex w-full items-center gap-3 rounded-lg border p-4 text-start transition ${style.card} ${
-        canBook ? "cursor-pointer" : "cursor-default"
-      }`}
+      className={style.card}
     >
-      <div
-        className="w-28 shrink-0 text-sm font-semibold text-barber-gold"
-        dir="ltr"
-      >
-        {formatTimeDisplay(appointment.time_slot)}
+      <div className="flex min-w-0 items-center justify-between gap-2 sm:contents">
+        <div className="y2k-slot-time" dir="ltr">
+          {formatTimeDisplay(appointment.time_slot)}
+        </div>
+        <span className={style.badge}>{statusLabelAr(appointment.status)}</span>
       </div>
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 sm:order-2">
         {appointment.status === "booked" && appointment.customer_name ? (
-          <p className="truncate text-lg font-medium text-white">
+          <p className="truncate text-base font-black text-y2k-white sm:text-lg">
             {appointment.customer_name}
           </p>
         ) : appointment.status === "blocked" ? (
-          <p className="text-gray-400">{ar.slot.unavailable}</p>
+          <p className="text-sm font-bold text-y2k-muted sm:text-base">
+            {ar.slot.unavailable}
+          </p>
         ) : (
-          <p className="text-gray-400">{ar.slot.available}</p>
+          <p className="text-sm font-bold text-y2k-muted sm:text-base">{ar.slot.available}</p>
         )}
       </div>
-      <span
-        className={`shrink-0 rounded-full border px-3 py-1 text-xs font-medium ${style.badge}`}
-      >
-        {statusLabelAr(appointment.status)}
-      </span>
       {canBook && (
-        <span
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-barber-gold/20 text-lg text-barber-gold"
-          aria-hidden
-        >
+        <span className="y2k-slot-add" aria-hidden>
           +
         </span>
       )}

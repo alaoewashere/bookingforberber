@@ -55,7 +55,7 @@ export default function DaySchedule({
 
   return (
     <>
-      <div className="space-y-3">
+      <div className="grid grid-cols-1 gap-2 sm:gap-3 md:grid-cols-2 xl:grid-cols-3">
         {appointments.map((appointment) => (
           <TimeSlot
             key={`${appointment.date}-${appointment.time_slot}`}

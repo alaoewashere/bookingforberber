@@ -17,7 +17,7 @@ export const ar = {
   day: {
     backDays: "كل الأيام",
     backHome: "الرئيسية",
-    hoursRange: "٩:٠٠ ص – ٧:٠٠ م",
+    hoursRange: "كل ساعة — ٢٤ ساعة",
     bookedCount: (n: number) => `${n} محجوز`,
     otherCount: (n: number) => `${n} متاح أو مغلق`,
     loadError:

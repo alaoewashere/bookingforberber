@@ -1,6 +1,66 @@
-/** 9:00 AM through 7:00 PM, every hour */
-export const SLOT_START_HOUR = 9;
-export const SLOT_END_HOUR = 19;
+/** Midnight through 11:00 PM, every hour */
+export const SLOT_START_HOUR = 0;
+export const SLOT_END_HOUR = 23;
+
+const ARABIC_DIGITS = "٠١٢٣٤٥٦٧٨٩";
+
+const AR_WEEKDAYS = [
+  "الأحد",
+  "الإثنين",
+  "الثلاثاء",
+  "الأربعاء",
+  "الخميس",
+  "الجمعة",
+  "السبت",
+] as const;
+
+const AR_MONTHS = [
+  "يناير",
+  "فبراير",
+  "مارس",
+  "أبريل",
+  "مايو",
+  "يونيو",
+  "يوليو",
+  "أغسطس",
+  "سبتمبر",
+  "أكتوبر",
+  "نوفمبر",
+  "ديسمبر",
+] as const;
+
+const EN_WEEKDAYS = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+] as const;
+
+const EN_MONTHS = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+] as const;
+
+function toArabicNumerals(value: number | string): string {
+  return String(value).replace(/\d/g, (digit) => ARABIC_DIGITS[Number(digit)]);
+}
+
+function parseDateOnly(dateStr: string): Date {
+  return new Date(dateStr + "T12:00:00");
+}
 
 export function generateTimeSlots(): string[] {
   const slots: string[] = [];
@@ -10,36 +70,33 @@ export function generateTimeSlots(): string[] {
   return slots;
 }
 
+/** Stable across server/client (avoids Intl punctuation differences). */
 export function formatTimeDisplay(timeSlot: string): string {
-  const [h, m] = timeSlot.split(":").map(Number);
-  const d = new Date();
-  d.setHours(h, m, 0, 0);
-  return d.toLocaleTimeString("ar-SA", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  });
+  const [h24, min] = timeSlot.split(":").map(Number);
+  const period = h24 < 12 ? "ص" : "م";
+  let h12 = h24 % 12;
+  if (h12 === 0) h12 = 12;
+
+  const hourPart = toArabicNumerals(h12);
+  const minPart =
+    min === 0 ? "" : `:${toArabicNumerals(String(min).padStart(2, "0"))}`;
+  return `${hourPart}${minPart} ${period}`;
 }
 
+/** Stable across server/client (avoids Intl punctuation differences). */
 export function formatDateLabel(dateStr: string): string {
-  const d = new Date(dateStr + "T12:00:00");
-  return d.toLocaleDateString("ar-SA", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  const d = parseDateOnly(dateStr);
+  const weekday = AR_WEEKDAYS[d.getDay()];
+  const day = toArabicNumerals(d.getDate());
+  const month = AR_MONTHS[d.getMonth()];
+  const year = toArabicNumerals(d.getFullYear());
+  return `${weekday}، ${day} ${month} ${year}`;
 }
 
 /** Admin table: Saturday, June 7, 2026 */
 export function formatAdminDateLabel(dateStr: string): string {
-  const d = new Date(dateStr + "T12:00:00");
-  return d.toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
+  const d = parseDateOnly(dateStr);
+  return `${EN_WEEKDAYS[d.getDay()]}, ${EN_MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
 }
 
 /** Admin table: keep stored slot as HH:MM (e.g. 09:00) */

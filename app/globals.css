@@ -3,16 +3,255 @@
 @tailwind utilities;
 
 :root {
-  --barber-bg: #1a1a1a;
-  --barber-gold: #d4a017;
+  --y2k-bg: #080a0f;
+  --y2k-surface: #121820;
+  --y2k-gold: #d4a017;
+  --y2k-electric: #2d7ff9;
+  --y2k-white: #f4f6fa;
 }
 
-body {
-  @apply bg-barber-bg text-gray-100 antialiased min-h-screen;
+@layer base {
+  body {
+    @apply min-h-screen overflow-x-hidden bg-y2k-black font-bold text-y2k-white antialiased;
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    background-image:
+      linear-gradient(180deg, rgba(212, 160, 23, 0.06) 0%, transparent 28%),
+      linear-gradient(165deg, #0a0c10 0%, #0f1623 55%, #080a0f 100%);
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.04;
+    background-image:
+      linear-gradient(45deg, #d4a017 25%, transparent 25%),
+      linear-gradient(-45deg, #d4a017 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #d4a017 75%),
+      linear-gradient(-45deg, transparent 75%, #d4a017 75%);
+    background-size: 18px 18px;
+    background-position:
+      0 0,
+      0 9px,
+      9px -9px,
+      -9px 0;
+  }
+
+  [dir="rtl"] input,
+  [dir="rtl"] select,
+  [dir="rtl"] textarea {
+    text-align: right;
+  }
 }
 
-[dir="rtl"] input,
-[dir="rtl"] select,
-[dir="rtl"] textarea {
-  text-align: right;
+@layer components {
+  .y2k-shell {
+    @apply relative z-10;
+  }
+
+  .y2k-header {
+    @apply sticky top-0 z-40 border-b-[3px] border-y2k-gold bg-y2k-surface/95 shadow-y2k-sm backdrop-blur-md;
+  }
+
+  .y2k-logo {
+    @apply flex min-h-11 min-w-0 flex-col leading-tight;
+  }
+
+  .y2k-logo-latin {
+    @apply font-display text-[10px] font-normal uppercase tracking-[0.35em] text-y2k-gold sm:text-xs;
+  }
+
+  .y2k-logo-ar {
+    @apply text-lg font-black text-y2k-white sm:text-xl;
+  }
+
+  .y2k-nav-link {
+    @apply inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border-2 border-transparent px-3 text-sm font-black text-y2k-white transition hover:border-y2k-gold hover:bg-y2k-raised hover:text-y2k-gold sm:min-w-0;
+  }
+
+  .y2k-heading {
+    @apply text-2xl font-black leading-tight text-y2k-white sm:text-3xl;
+  }
+
+  .y2k-heading::before {
+    content: "✦ ★ ✦";
+    @apply mb-1 block font-display text-sm tracking-[0.4em] text-y2k-gold;
+  }
+
+  .y2k-heading-compact::before {
+    @apply text-xs tracking-[0.3em];
+  }
+
+  .y2k-subtitle {
+    @apply mt-2 text-sm font-bold text-y2k-muted sm:text-base;
+  }
+
+  .y2k-meta {
+    @apply text-sm font-black text-y2k-electric;
+  }
+
+  .y2k-link-back {
+    @apply mb-6 inline-flex min-h-10 items-center rounded-full border-2 border-y2k-gold bg-y2k-raised px-4 text-sm font-black text-y2k-white shadow-y2k-sm transition hover:-translate-y-0.5 hover:bg-y2k-surface hover:text-y2k-gold;
+  }
+
+  .y2k-btn-primary {
+    @apply inline-flex min-h-11 items-center justify-center rounded-full border-[3px] border-y2k-gold bg-gradient-to-b from-y2k-gold-light to-y2k-gold px-6 py-2.5 text-center text-sm font-black text-y2k-black shadow-y2k transition hover:-translate-y-0.5 hover:shadow-y2k-lg active:translate-y-0 active:shadow-y2k-sm disabled:opacity-50;
+  }
+
+  .y2k-btn-secondary {
+    @apply inline-flex min-h-11 items-center justify-center rounded-full border-[3px] border-y2k-gold bg-y2k-raised px-6 py-2.5 text-sm font-black text-y2k-white shadow-y2k-dark transition hover:-translate-y-0.5 hover:border-y2k-electric hover:text-y2k-electric active:translate-y-0;
+  }
+
+  .y2k-btn-ghost {
+    @apply inline-flex min-h-10 items-center rounded-full px-3 text-sm font-black text-y2k-gold transition hover:bg-y2k-raised hover:text-y2k-gold-light hover:underline;
+  }
+
+  .y2k-card {
+    @apply rounded-2xl border-[3px] border-y2k-gold/80 bg-y2k-surface p-5 shadow-y2k-dark;
+  }
+
+  .y2k-card-interactive {
+    @apply y2k-card block transition hover:-translate-y-1 hover:border-y2k-gold hover:shadow-y2k active:translate-y-0;
+  }
+
+  .y2k-card-title {
+    @apply text-lg font-black text-y2k-white;
+  }
+
+  .y2k-card-date {
+    @apply mt-1 block font-mono text-sm font-bold text-y2k-electric;
+  }
+
+  .y2k-pill-tag {
+    @apply mt-2 inline-block rounded-full border-2 border-y2k-gold bg-y2k-black px-3 py-0.5 text-xs font-black text-y2k-gold;
+  }
+
+  .y2k-empty {
+    @apply rounded-2xl border-[3px] border-dashed border-y2k-gold/50 bg-y2k-surface/80 p-8 text-center shadow-y2k-dark sm:p-12;
+  }
+
+  .y2k-empty-text {
+    @apply font-bold text-y2k-muted;
+  }
+
+  .y2k-panel {
+    @apply rounded-2xl border-[3px] border-y2k-gold/70 bg-y2k-surface p-4 shadow-y2k-dark sm:p-5;
+  }
+
+  .y2k-input {
+    @apply w-full rounded-2xl border-[3px] border-y2k-gold/60 bg-y2k-black px-4 py-3 font-bold text-y2k-white outline-none transition placeholder:text-y2k-muted focus:border-y2k-electric focus:ring-2 focus:ring-y2k-electric/25;
+  }
+
+  .y2k-modal-overlay {
+    @apply fixed inset-0 z-50 flex items-end justify-center bg-black/80 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-sm sm:items-center sm:p-4;
+  }
+
+  .y2k-modal {
+    @apply max-h-[min(90dvh,100%)] w-full max-w-md overflow-y-auto rounded-t-3xl border-[3px] border-y2k-gold bg-y2k-surface p-5 shadow-y2k-lg sm:rounded-3xl sm:p-6;
+  }
+
+  .y2k-modal-title {
+    @apply text-xl font-black text-y2k-white;
+  }
+
+  .y2k-modal-title::before {
+    content: "★ ";
+    @apply text-y2k-gold;
+  }
+
+  .y2k-error {
+    @apply rounded-2xl border-[3px] border-y2k-red bg-y2k-raised p-4 text-sm font-bold text-red-300 shadow-y2k-dark sm:p-6 sm:text-base;
+  }
+
+  .y2k-error-link {
+    @apply mt-4 inline-block font-black text-y2k-gold hover:underline;
+  }
+
+  /* Time slots */
+  .y2k-slot {
+    @apply flex h-full w-full min-w-0 flex-col gap-2 rounded-2xl border-[3px] p-3 text-start shadow-y2k-dark transition sm:flex-row sm:items-center sm:gap-3 sm:p-4;
+  }
+
+  .y2k-slot-available {
+    @apply y2k-slot cursor-pointer border-y2k-gold/70 bg-y2k-raised hover:-translate-y-0.5 hover:border-y2k-gold hover:shadow-y2k active:scale-[0.99];
+  }
+
+  .y2k-slot-booked {
+    @apply y2k-slot cursor-default border-y2k-red bg-gradient-to-br from-y2k-raised to-y2k-red-dark/40;
+  }
+
+  .y2k-slot-blocked {
+    @apply y2k-slot cursor-default border-y2k-muted/50 bg-y2k-surface opacity-85;
+  }
+
+  .y2k-slot-time {
+    @apply shrink-0 font-display text-sm font-black text-y2k-gold sm:w-24;
+  }
+
+  .y2k-slot-add {
+    @apply ms-auto flex h-9 w-9 shrink-0 items-center justify-center self-end rounded-full border-2 border-y2k-gold bg-y2k-gold text-lg font-black text-y2k-black shadow-y2k-sm sm:order-4 sm:h-8 sm:w-8;
+  }
+
+  .y2k-badge {
+    @apply shrink-0 rounded-full border-2 px-2.5 py-0.5 text-xs font-black sm:order-3;
+  }
+
+  .y2k-badge-available {
+    @apply y2k-badge border-y2k-gold bg-y2k-black text-y2k-gold;
+  }
+
+  .y2k-badge-booked {
+    @apply y2k-badge border-y2k-red bg-y2k-red-dark text-red-200;
+  }
+
+  .y2k-badge-blocked {
+    @apply y2k-badge border-y2k-muted bg-y2k-surface text-y2k-muted;
+  }
+
+  .y2k-badge-admin-available {
+    @apply rounded-full border-2 border-y2k-gold bg-y2k-black px-2.5 py-0.5 text-xs font-black text-y2k-gold;
+  }
+
+  .y2k-badge-admin-booked {
+    @apply rounded-full border-2 border-y2k-red bg-y2k-red-dark px-2.5 py-0.5 text-xs font-black text-red-200;
+  }
+
+  .y2k-badge-admin-blocked {
+    @apply rounded-full border-2 border-y2k-muted bg-y2k-surface px-2.5 py-0.5 text-xs font-black text-y2k-muted;
+  }
+
+  .y2k-table-wrap {
+    @apply hidden overflow-x-auto rounded-2xl border-[3px] border-y2k-gold/70 bg-y2k-surface shadow-y2k-dark md:block;
+  }
+
+  .y2k-table {
+    @apply w-full text-sm;
+  }
+
+  .y2k-table thead {
+    @apply bg-y2k-black font-black text-y2k-gold;
+  }
+
+  .y2k-table th {
+    @apply px-4 py-3 text-start;
+  }
+
+  .y2k-table tbody {
+    @apply divide-y-[2px] divide-y2k-gold/15;
+  }
+
+  .y2k-table tr {
+    @apply transition hover:bg-y2k-raised;
+  }
+
+  .y2k-table td {
+    @apply px-4 py-3 font-bold text-y2k-white;
+  }
+
+  .y2k-admin-card {
+    @apply rounded-2xl border-[3px] border-y2k-gold/60 bg-y2k-raised p-4 shadow-y2k-dark;
+  }
 }

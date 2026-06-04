@@ -35,9 +35,9 @@ export default function AdminLogin({ onSuccess }: AdminLoginProps) {
   }
 
   return (
-    <div className="mx-auto max-w-sm rounded-xl border border-barber-border bg-barber-surface p-8">
-      <h1 className="text-2xl font-bold text-barber-gold">{ar.admin.loginTitle}</h1>
-      <p className="mt-2 text-sm text-gray-400">{ar.admin.loginSubtitle}</p>
+    <div className="y2k-panel mx-auto w-full max-w-sm sm:p-8">
+      <h1 className="y2k-heading y2k-heading-compact text-xl sm:text-2xl">{ar.admin.loginTitle}</h1>
+      <p className="y2k-subtitle mt-2">{ar.admin.loginSubtitle}</p>
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         <input
           type="password"
@@ -46,14 +46,10 @@ export default function AdminLogin({ onSuccess }: AdminLoginProps) {
           placeholder={ar.admin.password}
           required
           dir="ltr"
-          className="w-full rounded-lg border border-barber-border bg-barber-bg px-4 py-3 text-white outline-none focus:border-barber-gold"
+          className="y2k-input"
         />
-        {error && <p className="text-sm text-red-400">{error}</p>}
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full rounded-lg bg-barber-gold py-3 font-semibold text-barber-bg disabled:opacity-50"
-        >
+        {error && <p className="text-sm font-bold text-red-400">{error}</p>}
+        <button type="submit" disabled={loading} className="y2k-btn-primary w-full">
           {loading ? ar.admin.checking : ar.admin.signIn}
         </button>
       </form>

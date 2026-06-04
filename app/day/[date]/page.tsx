@@ -23,9 +23,9 @@ export default async function DayPage({ params }: DayPageProps) {
     appointments = await ensureDaySlots(date);
   } catch {
     return (
-      <div className="rounded-lg border border-red-900/50 bg-red-950/30 p-6 text-red-300">
+      <div className="y2k-error">
         <p>{ar.day.loadError}</p>
-        <Link href="/" className="mt-4 inline-block text-barber-gold hover:underline">
+        <Link href="/" className="y2k-error-link">
           {ar.day.backHome}
         </Link>
       </div>
@@ -37,17 +37,21 @@ export default async function DayPage({ params }: DayPageProps) {
 
   return (
     <div>
-      <Link
-        href="/"
-        className="mb-6 inline-flex text-sm text-gray-400 transition hover:text-barber-gold"
-      >
+      <Link href="/" className="y2k-link-back">
         {ar.day.backDays}
       </Link>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white">{formatDateLabel(date)}</h1>
-        <p className="mt-2 text-gray-400">
-          {ar.day.hoursRange} · {ar.day.bookedCount(booked)} ·{" "}
-          {ar.day.otherCount(other)}
+      <div className="mb-6 sm:mb-8">
+        <h1 className="y2k-heading y2k-heading-compact">{formatDateLabel(date)}</h1>
+        <p className="mt-2 flex flex-wrap gap-x-2 gap-y-1 y2k-meta">
+          <span>{ar.day.hoursRange}</span>
+          <span className="hidden text-y2k-gold/40 sm:inline" aria-hidden>
+            ·
+          </span>
+          <span>{ar.day.bookedCount(booked)}</span>
+          <span className="hidden text-y2k-gold/40 sm:inline" aria-hidden>
+            ·
+          </span>
+          <span>{ar.day.otherCount(other)}</span>
         </p>
       </div>
       <DaySchedule initialAppointments={appointments} date={date} />

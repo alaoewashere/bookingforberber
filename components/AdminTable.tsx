@@ -130,13 +130,13 @@ export default function AdminTable({ initialAppointments }: AdminTableProps) {
 
   const statusBadge = (status: AppointmentStatus) => (
     <span
-      className={`rounded px-2 py-0.5 text-xs ${
+      className={
         status === "available"
-          ? "bg-emerald-900/50 text-emerald-300"
+          ? "y2k-badge-admin-available"
           : status === "booked"
-            ? "bg-red-900/50 text-red-300"
-            : "bg-amber-900/50 text-amber-300"
-      }`}
+            ? "y2k-badge-admin-booked"
+            : "y2k-badge-admin-blocked"
+      }
     >
       {adminStatusEn[status]}
     </span>
@@ -145,13 +145,16 @@ export default function AdminTable({ initialAppointments }: AdminTableProps) {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold text-barber-gold">
+        <h2 className="text-lg font-black text-y2k-white">
+          <span className="font-display text-y2k-gold" aria-hidden>
+            ★{" "}
+          </span>
           {ar.admin.allAppointments}
         </h2>
         <button
           type="button"
           onClick={() => setShowAdd(!showAdd)}
-          className="rounded-lg bg-barber-gold px-4 py-2 text-sm font-semibold text-barber-bg"
+          className="y2k-btn-primary w-full sm:w-auto"
         >
           {showAdd ? ar.admin.cancel : ar.admin.addBooking}
         </button>
@@ -160,7 +163,7 @@ export default function AdminTable({ initialAppointments }: AdminTableProps) {
       {showAdd && (
         <form
           onSubmit={handleAddBooking}
-          className="grid gap-4 rounded-lg border border-barber-border bg-barber-surface p-4 sm:grid-cols-4"
+          className="y2k-panel grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4"
         >
           <input
             type="date"
@@ -168,13 +171,13 @@ export default function AdminTable({ initialAppointments }: AdminTableProps) {
             onChange={(e) => setAddDate(e.target.value)}
             required
             dir="ltr"
-            className="rounded-lg border border-barber-border bg-barber-bg px-3 py-2 text-white"
+            className="y2k-input !py-2"
           />
           <select
             value={addTime}
             onChange={(e) => setAddTime(e.target.value)}
             dir="ltr"
-            className="rounded-lg border border-barber-border bg-barber-bg px-3 py-2 text-white"
+            className="y2k-input !py-2"
           >
             {timeOptions.map((t) => (
               <option key={t} value={t}>
@@ -188,121 +191,210 @@ export default function AdminTable({ initialAppointments }: AdminTableProps) {
             onChange={(e) => setAddName(e.target.value)}
             placeholder={ar.admin.customerName}
             required
-            className="rounded-lg border border-barber-border bg-barber-bg px-3 py-2 text-white sm:col-span-2"
+            className="y2k-input !py-2 sm:col-span-2 lg:col-span-2"
           />
           <button
             type="submit"
             disabled={loading}
-            className="rounded-lg bg-barber-gold py-2 font-semibold text-barber-bg sm:col-span-4"
+            className="y2k-btn-primary sm:col-span-2 lg:col-span-4"
           >
             {ar.admin.saveBooking}
           </button>
         </form>
       )}
 
-      <div className="overflow-x-auto rounded-lg border border-barber-border">
-        <table className="w-full min-w-[640px] text-sm">
-          <thead className="bg-barber-surface text-gray-400">
-            <tr>
-              <th className="px-4 py-3 text-start font-medium">{ar.admin.date}</th>
-              <th className="px-4 py-3 text-start font-medium">{ar.admin.time}</th>
-              <th className="px-4 py-3 text-start font-medium">{ar.admin.customer}</th>
-              <th className="px-4 py-3 text-start font-medium">{ar.admin.status}</th>
-              <th className="px-4 py-3 text-start font-medium">{ar.admin.actions}</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-barber-border">
-            {rows.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
-                  {ar.admin.empty}
-                </td>
-              </tr>
-            ) : (
-              rows.map((row) => (
-                <tr key={row.id} className="hover:bg-barber-surface/50">
-                  <td className="whitespace-nowrap px-4 py-3">
-                    {formatAdminDateLabel(row.date)}
-                  </td>
-                  <td className="px-4 py-3 font-mono text-barber-gold" dir="ltr">
-                    {formatAdminTimeSlot(row.time_slot)}
-                  </td>
-                  <td className="px-4 py-3">
-                    {editingId === row.id ? (
-                      <input
-                        value={editName}
-                        onChange={(e) => setEditName(e.target.value)}
-                        className="w-full max-w-[180px] rounded border border-barber-border bg-barber-bg px-2 py-1 text-white"
-                      />
-                    ) : (
-                      row.customer_name ?? ar.admin.dash
-                    )}
-                  </td>
-                  <td className="px-4 py-3">{statusBadge(row.status)}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-wrap gap-2">
-                      {editingId === row.id ? (
-                        <>
-                          <button
-                            type="button"
-                            onClick={() => handleSaveEdit(row)}
-                            disabled={loading}
-                            className="text-xs text-barber-gold hover:underline"
-                          >
-                            {ar.admin.save}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setEditingId(null)}
-                            className="text-xs text-gray-400 hover:underline"
-                          >
-                            {ar.admin.cancel}
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          {row.status === "booked" && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setEditingId(row.id);
-                                setEditName(row.customer_name ?? "");
-                              }}
-                              className="text-xs text-barber-gold hover:underline"
-                            >
-                              {ar.admin.edit}
-                            </button>
-                          )}
-                          {(row.status === "booked" || row.status === "blocked") && (
-                            <button
-                              type="button"
-                              onClick={() => handleClear(row.id)}
-                              disabled={loading}
-                              className="text-xs text-gray-300 hover:underline"
-                            >
-                              {ar.admin.clear}
-                            </button>
-                          )}
-                          {row.status !== "blocked" && (
-                            <button
-                              type="button"
-                              onClick={() => handleBlock(row.id)}
-                              disabled={loading}
-                              className="text-xs text-amber-400 hover:underline"
-                            >
-                              {ar.admin.block}
-                            </button>
-                          )}
-                        </>
+      {rows.length === 0 ? (
+        <p className="y2k-empty y2k-empty-text">{ar.admin.empty}</p>
+      ) : (
+        <>
+          <ul className="space-y-3 md:hidden">
+            {rows.map((row) => (
+              <li
+                key={row.id}
+                className="y2k-admin-card"
+              >
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="font-black text-y2k-white">
+                      {formatAdminDateLabel(row.date)}
+                    </p>
+                    <p className="mt-0.5 font-mono text-sm font-bold text-y2k-gold" dir="ltr">
+                      {formatAdminTimeSlot(row.time_slot)}
+                    </p>
+                  </div>
+                  {statusBadge(row.status)}
+                </div>
+                <div className="mt-3">
+                  <p className="text-xs font-bold text-y2k-muted">{ar.admin.customer}</p>
+                  {editingId === row.id ? (
+                    <input
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      className="y2k-input mt-1 !py-2"
+                    />
+                  ) : (
+                    <p className="mt-0.5 font-bold text-y2k-white">
+                      {row.customer_name ?? ar.admin.dash}
+                    </p>
+                  )}
+                </div>
+                <div className="mt-4 flex flex-wrap gap-3 border-t-2 border-y2k-gold/20 pt-3">
+                  {editingId === row.id ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => handleSaveEdit(row)}
+                        disabled={loading}
+                        className="y2k-btn-ghost"
+                      >
+                        {ar.admin.save}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditingId(null)}
+                        className="y2k-btn-ghost text-y2k-muted"
+                      >
+                        {ar.admin.cancel}
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      {row.status === "booked" && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingId(row.id);
+                            setEditName(row.customer_name ?? "");
+                          }}
+                          className="y2k-btn-ghost"
+                        >
+                          {ar.admin.edit}
+                        </button>
                       )}
-                    </div>
-                  </td>
+                      {(row.status === "booked" || row.status === "blocked") && (
+                        <button
+                          type="button"
+                          onClick={() => handleClear(row.id)}
+                          disabled={loading}
+                          className="y2k-btn-ghost"
+                        >
+                          {ar.admin.clear}
+                        </button>
+                      )}
+                      {row.status !== "blocked" && (
+                        <button
+                          type="button"
+                          onClick={() => handleBlock(row.id)}
+                          disabled={loading}
+                          className="y2k-btn-ghost text-y2k-electric"
+                        >
+                          {ar.admin.block}
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+
+          <div className="y2k-table-wrap">
+            <table className="y2k-table">
+              <thead>
+                <tr>
+                  <th>{ar.admin.date}</th>
+                  <th>{ar.admin.time}</th>
+                  <th>{ar.admin.customer}</th>
+                  <th>{ar.admin.status}</th>
+                  <th>{ar.admin.actions}</th>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+              </thead>
+              <tbody>
+                {rows.map((row) => (
+                  <tr key={row.id}>
+                    <td className="whitespace-nowrap">
+                      {formatAdminDateLabel(row.date)}
+                    </td>
+                    <td className="font-mono font-bold text-y2k-gold" dir="ltr">
+                      {formatAdminTimeSlot(row.time_slot)}
+                    </td>
+                    <td className="px-4 py-3">
+                      {editingId === row.id ? (
+                        <input
+                          value={editName}
+                          onChange={(e) => setEditName(e.target.value)}
+                          className="y2k-input max-w-[180px] !py-1"
+                        />
+                      ) : (
+                        row.customer_name ?? ar.admin.dash
+                      )}
+                    </td>
+                    <td>{statusBadge(row.status)}</td>
+                    <td>
+                      <div className="flex flex-wrap gap-2">
+                        {editingId === row.id ? (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => handleSaveEdit(row)}
+                              disabled={loading}
+                              className="y2k-btn-ghost !min-h-8 text-xs"
+                            >
+                              {ar.admin.save}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setEditingId(null)}
+                              className="y2k-btn-ghost !min-h-8 text-xs text-y2k-muted"
+                            >
+                              {ar.admin.cancel}
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            {row.status === "booked" && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditingId(row.id);
+                                  setEditName(row.customer_name ?? "");
+                                }}
+                                className="y2k-btn-ghost !min-h-8 text-xs"
+                              >
+                                {ar.admin.edit}
+                              </button>
+                            )}
+                            {(row.status === "booked" || row.status === "blocked") && (
+                              <button
+                                type="button"
+                                onClick={() => handleClear(row.id)}
+                                disabled={loading}
+                                className="y2k-btn-ghost !min-h-8 text-xs"
+                              >
+                                {ar.admin.clear}
+                              </button>
+                            )}
+                            {row.status !== "blocked" && (
+                              <button
+                                type="button"
+                                onClick={() => handleBlock(row.id)}
+                                disabled={loading}
+                                className="y2k-btn-ghost !min-h-8 text-xs text-y2k-electric"
+                              >
+                                {ar.admin.block}
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
     </div>
   );
 }

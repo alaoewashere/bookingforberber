@@ -19,16 +19,12 @@ export default function AdminDashboard({ appointments }: AdminDashboardProps) {
 
   return (
     <div>
-      <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-barber-gold">{ar.admin.title}</h1>
-          <p className="mt-1 text-gray-400">{ar.admin.subtitle}</p>
+      <div className="mb-6 flex flex-col gap-4 sm:mb-8 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="y2k-heading">{ar.admin.title}</h1>
+          <p className="y2k-subtitle">{ar.admin.subtitle}</p>
         </div>
-        <button
-          type="button"
-          onClick={handleLogout}
-          className="rounded-lg border border-barber-border px-4 py-2 text-sm text-gray-300 hover:bg-barber-surface"
-        >
+        <button type="button" onClick={handleLogout} className="y2k-btn-secondary w-full sm:w-auto">
           {ar.admin.logout}
         </button>
       </div>

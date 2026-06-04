@@ -61,10 +61,13 @@ export async function ensureDaySlots(date: string): Promise<Appointment[]> {
   }
 
   const existing = await getAppointmentsByDate(date);
-  if (existing.length > 0) return existing;
+  const expected = generateTimeSlots().map(normalizeTimeSlot);
+  const existingSet = new Set(existing.map((a) => a.time_slot));
+  const missing = expected.filter((t) => !existingSet.has(t));
+  if (missing.length === 0) return existing;
 
   const supabase = createServerClient();
-  const slots = generateTimeSlots().map((time_slot) => ({
+  const slots = missing.map((time_slot) => ({
     date,
     time_slot: normalizeTimeSlot(time_slot),
     customer_name: null,

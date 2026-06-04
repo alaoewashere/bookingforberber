@@ -41,10 +41,10 @@ export default function AddDayModal({ open, onClose }: AddDayModalProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-      <div className="w-full max-w-md rounded-xl border border-barber-border bg-barber-surface p-6">
-        <h2 className="text-xl font-bold text-barber-gold">{ar.addDay.title}</h2>
-        <p className="mt-1 text-sm text-gray-400">{ar.addDay.subtitle}</p>
+    <div className="y2k-modal-overlay">
+      <div className="y2k-modal">
+        <h2 className="y2k-modal-title">{ar.addDay.title}</h2>
+        <p className="mt-1 text-sm font-bold text-y2k-muted">{ar.addDay.subtitle}</p>
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <input
             type="date"
@@ -52,22 +52,14 @@ export default function AddDayModal({ open, onClose }: AddDayModalProps) {
             onChange={(e) => setDate(e.target.value)}
             required
             dir="ltr"
-            className="w-full rounded-lg border border-barber-border bg-barber-bg px-4 py-3 text-white outline-none focus:border-barber-gold"
+            className="y2k-input"
           />
-          {error && <p className="text-sm text-red-400">{error}</p>}
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 rounded-lg border border-barber-border py-2 text-gray-300 hover:bg-barber-bg"
-            >
+          {error && <p className="text-sm font-bold text-red-400">{error}</p>}
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:gap-3">
+            <button type="button" onClick={onClose} className="y2k-btn-secondary min-h-11 flex-1">
               {ar.addDay.cancel}
             </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex-1 rounded-lg bg-barber-gold py-2 font-semibold text-barber-bg disabled:opacity-50"
-            >
+            <button type="submit" disabled={loading} className="y2k-btn-primary min-h-11 flex-1">
               {loading ? ar.addDay.creating : ar.addDay.create}
             </button>
           </div>

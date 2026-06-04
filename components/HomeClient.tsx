@@ -16,58 +16,38 @@ export default function HomeClient({ dates }: HomeClientProps) {
 
   return (
     <>
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-white">{ar.home.title}</h1>
-          <p className="mt-2 text-gray-400">{ar.home.subtitle}</p>
+      <div className="mb-6 flex flex-col gap-4 sm:mb-8 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="y2k-heading">{ar.home.title}</h1>
+          <p className="y2k-subtitle">{ar.home.subtitle}</p>
         </div>
-        <div className="flex flex-wrap gap-3">
-          <Link
-            href={`/day/${today}`}
-            className="rounded-lg bg-barber-gold px-5 py-2.5 text-sm font-semibold text-barber-bg transition hover:bg-barber-gold-light"
-          >
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:gap-3">
+          <Link href={`/day/${today}`} className="y2k-btn-primary">
             {ar.home.openToday}
           </Link>
-          <button
-            type="button"
-            onClick={() => setAddOpen(true)}
-            className="rounded-lg border border-barber-gold px-5 py-2.5 text-sm font-semibold text-barber-gold transition hover:bg-barber-gold/10"
-          >
+          <button type="button" onClick={() => setAddOpen(true)} className="y2k-btn-secondary">
             {ar.home.addDay}
           </button>
         </div>
       </div>
 
       {dates.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-barber-border bg-barber-surface/50 p-12 text-center">
-          <p className="text-gray-400">{ar.home.noDays}</p>
-          <button
-            type="button"
-            onClick={() => setAddOpen(true)}
-            className="mt-4 text-barber-gold hover:underline"
-          >
+        <div className="y2k-empty">
+          <p className="y2k-empty-text">{ar.home.noDays}</p>
+          <button type="button" onClick={() => setAddOpen(true)} className="y2k-btn-ghost mt-4">
             {ar.home.addFirstDay}
           </button>
         </div>
       ) : (
-        <ul className="grid gap-3 sm:grid-cols-2">
+        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {dates.map((date) => (
             <li key={date}>
-              <Link
-                href={`/day/${date}`}
-                className="block rounded-xl border border-barber-border bg-barber-surface p-5 transition hover:border-barber-gold/50 hover:shadow-lg hover:shadow-barber-gold/5"
-              >
-                <span className="text-lg font-semibold text-white">
-                  {formatDateLabel(date)}
-                </span>
-                <span className="mt-1 block font-mono text-sm text-gray-500" dir="ltr">
+              <Link href={`/day/${date}`} className="y2k-card-interactive">
+                <span className="y2k-card-title">{formatDateLabel(date)}</span>
+                <span className="y2k-card-date" dir="ltr">
                   {date}
                 </span>
-                {date === today && (
-                  <span className="mt-2 inline-block rounded bg-barber-gold/20 px-2 py-0.5 text-xs text-barber-gold">
-                    {ar.home.today}
-                  </span>
-                )}
+                {date === today && <span className="y2k-pill-tag">{ar.home.today}</span>}
               </Link>
             </li>
           ))}
