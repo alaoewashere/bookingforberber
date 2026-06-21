@@ -88,7 +88,7 @@ export function formatTimeDisplay(timeSlot: string, lang: "ar" | "tr" | "en" = "
     return `${h12}${minPart} ${period}`;
   }
 
-  const period = h24 < 18 ? "ص" : "م";
+  const period = "م";
   const hourPart = toArabicNumerals(h12);
   const minPart =
     min === 0 ? "" : `:${toArabicNumerals(String(min).padStart(2, "0"))}`;
