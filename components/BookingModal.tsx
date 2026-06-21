@@ -39,8 +39,14 @@ export default function BookingModal({ appointment, open, onClose, onBook }: Boo
   useEffect(() => {
     if (open) {
       setName(""); setPhone(""); setService(""); setError(""); setPhase("form");
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
     }
-    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+    return () => {
+      document.body.style.overflow = "";
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
   }, [open, appointment?.id]);
 
   if (!open || !appointment) return null;
