@@ -39,6 +39,8 @@ export default function AdminCalendar({ initialAppointments }: AdminCalendarProp
   const [addName,      setAddName]      = useState("");
   const [loading,      setLoading]      = useState(false);
   const [tab,          setTab]          = useState<Tab>("calendar");
+  const [editingNotifId, setEditingNotifId] = useState<string | null>(null);
+  const [editNotif,      setEditNotif]      = useState<{ name: string; phone: string; service: string }>({ name: "", phone: "", service: "" });
   const [seenIds, setSeenIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -156,6 +158,21 @@ export default function AdminCalendar({ initialAppointments }: AdminCalendarProp
     } finally { setLoading(false); }
   }
 
+  async function handleSaveNotifEdit(row: Appointment) {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/appointments/${row.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customer_name: editNotif.name.trim(), phone: editNotif.phone.trim(), service: editNotif.service || undefined }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? ar.admin.updateFailed);
+      refreshRow(json as Appointment);
+      setEditingNotifId(null);
+    } finally { setLoading(false); }
+  }
+
   function goMonth(delta: number) {
     const n = shiftMonth(viewYear, viewMonth, delta); setViewYear(n.year); setViewMonth(n.month);
   }
@@ -236,16 +253,70 @@ export default function AdminCalendar({ initialAppointments }: AdminCalendarProp
                 <div className="space-y-2">
                   {appts.map((a) => {
                     const meta = parseBookingMeta(a.notes);
+                    const isEditing = editingNotifId === a.id;
                     return (
-                      <div key={a.id} className="m-notif-entry">
-                        <span style={{ ...F, fontWeight: 500, fontSize: "0.85rem", color: "var(--m-brown-light)" }} dir="ltr">
-                          {formatTimeDisplay(a.time_slot)}
-                        </span>
-                        <span style={{ ...F, fontWeight: 700, color: "var(--m-cream)" }}>{a.customer_name ?? "—"}</span>
-                        <span style={{ ...F, fontWeight: 300, color: "var(--m-cream-2)", fontSize: "0.85rem" }} dir="ltr">
-                          {meta?.phone || "—"}
-                        </span>
-                        <span className="m-pill">{serviceLabelAr(meta?.service)}</span>
+                      <div key={a.id} style={{ background: "var(--m-elevated)", borderRadius: 10, border: "1px solid var(--m-border)", padding: "0.65rem 0.75rem" }}>
+                        {isEditing ? (
+                          <div className="space-y-2">
+                            <input
+                              type="text" value={editNotif.name}
+                              onChange={(e) => setEditNotif((p) => ({ ...p, name: e.target.value }))}
+                              placeholder={ar.admin.customerName}
+                              className="m-input !py-1.5 w-full" style={{ fontSize: "0.82rem" }}
+                            />
+                            <input
+                              type="tel" value={editNotif.phone} dir="ltr"
+                              onChange={(e) => setEditNotif((p) => ({ ...p, phone: e.target.value }))}
+                              placeholder="+966 5..."
+                              className="m-input !py-1.5 w-full" style={{ fontSize: "0.82rem" }}
+                            />
+                            <div className="grid grid-cols-3 gap-1.5">
+                              {(["hair", "beard", "hair_beard"] as const).map((s) => (
+                                <button key={s} type="button"
+                                  onClick={() => setEditNotif((p) => ({ ...p, service: s }))}
+                                  className={editNotif.service === s ? "m-service-opt m-service-opt-active" : "m-service-opt"}
+                                  style={{ fontSize: "0.72rem", padding: "0.35rem 0.25rem" }}
+                                >
+                                  {serviceLabelAr(s)}
+                                </button>
+                              ))}
+                            </div>
+                            <div className="flex gap-1.5">
+                              <button type="button" onClick={() => handleSaveNotifEdit(a)} disabled={loading}
+                                className="m-btn-primary flex-1" style={{ fontSize: "0.8rem", minHeight: "2rem" }}>
+                                {ar.admin.save}
+                              </button>
+                              <button type="button" onClick={() => setEditingNotifId(null)}
+                                className="m-btn-secondary flex-1" style={{ fontSize: "0.8rem", minHeight: "2rem" }}>
+                                {ar.admin.cancel}
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span style={{ ...F, fontWeight: 500, fontSize: "0.85rem", color: "var(--m-brown-light)", flexShrink: 0 }} dir="ltr">
+                              {formatTimeDisplay(a.time_slot)}
+                            </span>
+                            <span style={{ ...F, fontWeight: 700, color: "var(--m-cream)", flex: 1, minWidth: 0 }}>{a.customer_name ?? "—"}</span>
+                            <span style={{ ...F, fontWeight: 300, color: "var(--m-cream-2)", fontSize: "0.82rem", flexShrink: 0 }} dir="ltr">
+                              {meta?.phone || "—"}
+                            </span>
+                            <span className="m-pill" style={{ flexShrink: 0 }}>{serviceLabelAr(meta?.service)}</span>
+                            <div className="flex gap-1 flex-shrink-0">
+                              <button type="button"
+                                onClick={() => { setEditingNotifId(a.id); setEditNotif({ name: a.customer_name ?? "", phone: meta?.phone ?? "", service: meta?.service ?? "" }); }}
+                                className="m-btn-ghost" style={{ fontSize: "0.75rem", padding: "0.2rem 0.5rem" }}>
+                                {ar.admin.edit}
+                              </button>
+                              <button type="button"
+                                onClick={() => { if (confirm(ar.admin.clearConfirm)) handleClear(a.id); }}
+                                disabled={loading}
+                                className="m-btn-ghost" style={{ fontSize: "0.75rem", padding: "0.2rem 0.5rem", color: "var(--m-red)" }}>
+                                {ar.admin.clear}
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     );
                   })}

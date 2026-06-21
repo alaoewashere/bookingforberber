@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { clearAppointmentSlot, upsertAppointment } from "@/lib/appointments";
+import { parseBookingMeta } from "@/lib/types";
 import { createServerClient } from "@/lib/supabase";
 
 type RouteContext = { params: Promise<{ id: string }> };
@@ -50,11 +51,16 @@ export async function PATCH(request: Request, context: RouteContext) {
           { status: 400 }
         );
       }
+      const existingMeta = parseBookingMeta(existing.notes as string | null);
+      const phone = typeof body.phone === "string" ? body.phone.trim() : (existingMeta?.phone ?? "");
+      const service = body.service ?? existingMeta?.service;
       const data = await upsertAppointment({
         date,
         time_slot,
         customer_name: name,
         status: "booked",
+        phone,
+        service,
       });
       return NextResponse.json(data);
     }
