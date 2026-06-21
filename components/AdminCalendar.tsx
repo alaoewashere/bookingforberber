@@ -39,9 +39,14 @@ export default function AdminCalendar({ initialAppointments }: AdminCalendarProp
   const [addName,      setAddName]      = useState("");
   const [loading,      setLoading]      = useState(false);
   const [tab,          setTab]          = useState<Tab>("calendar");
-  const [seenIds,      setSeenIds]      = useState<Set<string>>(() => {
-    try { return new Set(JSON.parse(localStorage.getItem("notif_seen") ?? "[]") as string[]); } catch { return new Set(); }
-  });
+  const [seenIds, setSeenIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem("notif_seen") ?? "[]") as string[];
+      if (saved.length > 0) setSeenIds(new Set(saved));
+    } catch { /* ignore */ }
+  }, []);
 
   const timeOptions = generateTimeSlots();
   const monthCells  = useMemo(() => buildMonthGrid(viewYear, viewMonth), [viewYear, viewMonth]);
