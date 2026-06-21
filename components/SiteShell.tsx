@@ -43,7 +43,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
               +90 553 489 8399
             </a>
           </p>
-          <p style={{ fontFamily: "var(--font-thmanyah)", fontWeight: 300, fontSize: "0.7rem", color: "var(--m-muted)", marginTop: "0.4rem", opacity: 0.7 }}>
+          <p dir="ltr" style={{ fontFamily: "var(--font-thmanyah)", fontWeight: 300, fontSize: "0.7rem", color: "var(--m-muted)", marginTop: "0.4rem", opacity: 0.7 }}>
             developed by{" "}
             <a href="https://www.instagram.com/_9pd_/" target="_blank" rel="noopener noreferrer" style={{ color: "var(--m-brown-light)" }}>
               @_9pd_
