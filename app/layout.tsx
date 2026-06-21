@@ -4,7 +4,7 @@ import SiteShell from "@/components/SiteShell";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "حجز مواعيد الحلاقة",
+  title: "حجز مواعيد الحلاقة - Saç kesimi randevusu alın",
   description: "احجز موعدك بسهولة",
 };
 
