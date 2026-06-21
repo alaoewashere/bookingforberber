@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import type { Appointment } from "@/lib/types";
+import type { Appointment, ServiceType } from "@/lib/types";
 import TimeSlot from "@/components/TimeSlot";
 import BookingModal from "@/components/BookingModal";
 
@@ -10,12 +10,8 @@ interface DayScheduleProps {
   date: string;
 }
 
-export default function DaySchedule({
-  initialAppointments,
-  date,
-}: DayScheduleProps) {
-  const [appointments, setAppointments] =
-    useState<Appointment[]>(initialAppointments);
+export default function DaySchedule({ initialAppointments, date }: DayScheduleProps) {
+  const [appointments, setAppointments] = useState<Appointment[]>(initialAppointments);
   const [selected, setSelected] = useState<Appointment | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -24,8 +20,8 @@ export default function DaySchedule({
     setModalOpen(true);
   }, []);
 
-  const handleSave = useCallback(
-    async (_id: string, customerName: string) => {
+  const handleBook = useCallback(
+    async (name: string, phone: string, service: ServiceType) => {
       if (!selected) return;
 
       const res = await fetch("/api/appointments/book", {
@@ -34,14 +30,14 @@ export default function DaySchedule({
         body: JSON.stringify({
           date,
           time_slot: selected.time_slot,
-          customer_name: customerName,
+          customer_name: name,
+          phone,
+          service,
         }),
       });
 
       const json = await res.json();
-      if (!res.ok) {
-        throw new Error(json.error ?? "فشل الحفظ");
-      }
+      if (!res.ok) throw new Error(json.error ?? "فشل الحفظ");
 
       const saved = json as Appointment;
       setAppointments((prev) =>
@@ -67,8 +63,11 @@ export default function DaySchedule({
       <BookingModal
         appointment={selected}
         open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onSave={handleSave}
+        onClose={() => {
+          setModalOpen(false);
+          setSelected(null);
+        }}
+        onBook={handleBook}
       />
     </>
   );

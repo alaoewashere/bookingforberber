@@ -1,6 +1,6 @@
-/** Midnight through 11:00 PM, every hour */
-export const SLOT_START_HOUR = 0;
-export const SLOT_END_HOUR = 23;
+/** Noon (12:00) through 10:00 PM, every hour */
+export const SLOT_START_HOUR = 12;
+export const SLOT_END_HOUR = 22;
 
 const ARABIC_DIGITS = "٠١٢٣٤٥٦٧٨٩";
 
@@ -70,17 +70,24 @@ export function generateTimeSlots(): string[] {
   return slots;
 }
 
-/** Stable across server/client (avoids Intl punctuation differences). */
-export function formatTimeDisplay(timeSlot: string): string {
+/** Stable across server/client (avoids Intl punctuation differences).
+ *  Arabic: ص = noon–5 PM, م = 6–10 PM. Turkish: S = noon–5 PM, G = 6–10 PM. */
+export function formatTimeDisplay(timeSlot: string, lang: "ar" | "tr" = "ar"): string {
   const [h24, min] = timeSlot.split(":").map(Number);
-  const period = h24 < 12 ? "ص" : "م";
   let h12 = h24 % 12;
   if (h12 === 0) h12 = 12;
 
+  if (lang === "tr") {
+    const period = h24 < 18 ? "S" : "G";
+    const minPart = min === 0 ? "" : `:${String(min).padStart(2, "0")}`;
+    return `${h12}${minPart} ${period}`;
+  }
+
+  const period = h24 < 18 ? "ص" : "م";
   const hourPart = toArabicNumerals(h12);
   const minPart =
     min === 0 ? "" : `:${toArabicNumerals(String(min).padStart(2, "0"))}`;
-  return `${hourPart}${minPart} ${period}`;
+  return `${hourPart}${minPart}${period}`;
 }
 
 /** Stable across server/client (avoids Intl punctuation differences). */

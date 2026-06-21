@@ -3,42 +3,36 @@
 import { useState } from "react";
 import { ar } from "@/lib/i18n/ar";
 
-interface AdminLoginProps {
-  onSuccess: () => void;
-}
+interface AdminLoginProps { onSuccess: () => void; }
 
 export default function AdminLogin({ onSuccess }: AdminLoginProps) {
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [error,    setError]    = useState("");
+  const [loading,  setLoading]  = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
-    setError("");
+    setLoading(true); setError("");
     try {
       const res = await fetch("/api/admin/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password }),
       });
-      if (!res.ok) {
-        setError(ar.admin.invalidPassword);
-        return;
-      }
+      if (!res.ok) { setError(ar.admin.invalidPassword); return; }
       onSuccess();
-    } catch {
-      setError(ar.admin.loginFailed);
-    } finally {
-      setLoading(false);
-    }
+    } catch { setError(ar.admin.loginFailed); }
+    finally { setLoading(false); }
   }
 
   return (
-    <div className="y2k-panel mx-auto w-full max-w-sm sm:p-8">
-      <h1 className="y2k-heading y2k-heading-compact text-xl sm:text-2xl">{ar.admin.loginTitle}</h1>
-      <p className="y2k-subtitle mt-2">{ar.admin.loginSubtitle}</p>
-      <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+    <div className="mx-auto w-full max-w-xs m-anim-fade" dir="rtl">
+      <div className="mb-8">
+        <p className="m-section-label mb-2">وصول مقيّد</p>
+        <h1 className="m-heading" style={{ fontSize: "1.6rem" }}>{ar.admin.loginTitle}</h1>
+        <p className="m-subtitle">{ar.admin.loginSubtitle}</p>
+      </div>
+      <form onSubmit={handleSubmit} className="space-y-4">
         <input
           type="password"
           value={password}
@@ -46,10 +40,15 @@ export default function AdminLogin({ onSuccess }: AdminLoginProps) {
           placeholder={ar.admin.password}
           required
           dir="ltr"
-          className="y2k-input"
+          className="m-input"
+          autoFocus
         />
-        {error && <p className="text-sm font-bold text-red-400">{error}</p>}
-        <button type="submit" disabled={loading} className="y2k-btn-primary w-full">
+        {error && (
+          <p style={{ fontFamily: "var(--font-thmanyah)", fontWeight: 400, fontSize: "0.85rem", color: "var(--m-red)" }}>
+            {error}
+          </p>
+        )}
+        <button type="submit" disabled={loading} className="m-btn-primary w-full">
           {loading ? ar.admin.checking : ar.admin.signIn}
         </button>
       </form>

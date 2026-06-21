@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { bookAppointment } from "@/lib/appointments";
 import { isValidDateParam, normalizeTimeSlot } from "@/lib/slots";
+import type { ServiceType } from "@/lib/types";
+
+const VALID_SERVICES: ServiceType[] = ["hair", "beard", "hair_beard"];
 
 export async function POST(request: Request) {
   try {
@@ -10,6 +13,11 @@ export async function POST(request: Request) {
       typeof body.time_slot === "string" ? normalizeTimeSlot(body.time_slot) : "";
     const customer_name =
       typeof body.customer_name === "string" ? body.customer_name.trim() : "";
+    const phone =
+      typeof body.phone === "string" ? body.phone.trim() : "";
+    const service: ServiceType = VALID_SERVICES.includes(body.service)
+      ? (body.service as ServiceType)
+      : "hair";
 
     if (!isValidDateParam(date) || !time_slot) {
       return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
@@ -18,7 +26,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "اسم العميل مطلوب" }, { status: 400 });
     }
 
-    const appointment = await bookAppointment(date, time_slot, customer_name);
+    const appointment = await bookAppointment(date, time_slot, customer_name, phone, service);
     return NextResponse.json(appointment);
   } catch (e) {
     console.error(e);

@@ -1,4 +1,4 @@
-import type { Appointment, AppointmentStatus } from "@/lib/types";
+import type { Appointment, AppointmentStatus, ServiceType } from "@/lib/types";
 import { generateTimeSlots, isValidDateParam, normalizeTimeSlot } from "@/lib/slots";
 import { createServerClient } from "@/lib/supabase";
 
@@ -94,6 +94,8 @@ export type BookingPayload = {
   date: string;
   time_slot: string;
   customer_name: string;
+  phone?: string;
+  service?: ServiceType;
   status?: AppointmentStatus;
 };
 
@@ -105,6 +107,8 @@ export async function upsertAppointment(
   const time_slot = normalizeTimeSlot(payload.time_slot);
   const customer_name = payload.customer_name.trim();
   const status = payload.status ?? "booked";
+  const phone = payload.phone?.trim() ?? "";
+  const service = payload.service;
 
   if (!isValidDateParam(date)) {
     throw new Error("Invalid date");
@@ -118,12 +122,18 @@ export async function upsertAppointment(
 
   await ensureDaySlots(date);
 
+  const notes =
+    status === "booked" && (phone || service)
+      ? JSON.stringify({ phone: phone ?? "", service: service ?? "hair" })
+      : null;
+
   const supabase = createServerClient();
   const row = {
     date,
     time_slot,
     customer_name: status === "booked" ? customer_name : null,
     status,
+    notes,
   };
 
   const { data, error } = await supabase
@@ -139,12 +149,16 @@ export async function upsertAppointment(
 export async function bookAppointment(
   date: string,
   time_slot: string,
-  customer_name: string
+  customer_name: string,
+  phone?: string,
+  service?: ServiceType
 ): Promise<Appointment> {
   return upsertAppointment({
     date,
     time_slot,
     customer_name,
+    phone,
+    service,
     status: "booked",
   });
 }

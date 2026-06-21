@@ -9,57 +9,35 @@ interface TimeSlotProps {
   onBook: (appointment: Appointment) => void;
 }
 
-const statusStyles: Record<
-  Appointment["status"],
-  { badge: string; card: string }
-> = {
-  available: {
-    badge: "y2k-badge-available",
-    card: "y2k-slot-available",
-  },
-  booked: {
-    badge: "y2k-badge-booked",
-    card: "y2k-slot-booked",
-  },
-  blocked: {
-    badge: "y2k-badge-blocked",
-    card: "y2k-slot-blocked",
-  },
-};
-
 export default function TimeSlot({ appointment, onBook }: TimeSlotProps) {
-  const style = statusStyles[appointment.status];
-  const canBook = appointment.status === "available";
+  const avail  = appointment.status === "available";
+  const booked = appointment.status === "booked";
 
   return (
     <button
       type="button"
-      onClick={() => canBook && onBook(appointment)}
-      disabled={!canBook}
-      className={style.card}
+      onClick={() => avail && onBook(appointment)}
+      disabled={!avail}
+      className={avail ? "m-slot-available" : booked ? "m-slot-booked" : "m-slot-blocked"}
     >
-      <div className="flex min-w-0 items-center justify-between gap-2 sm:contents">
-        <div className="y2k-slot-time" dir="ltr">
-          {formatTimeDisplay(appointment.time_slot)}
-        </div>
-        <span className={style.badge}>{statusLabelAr(appointment.status)}</span>
-      </div>
-      <div className="min-w-0 flex-1 sm:order-2">
-        {appointment.status === "booked" && appointment.customer_name ? (
-          <p className="truncate text-base font-black text-y2k-white sm:text-lg">
-            {appointment.customer_name}
-          </p>
-        ) : appointment.status === "blocked" ? (
-          <p className="text-sm font-bold text-y2k-muted sm:text-base">
-            {ar.slot.unavailable}
-          </p>
-        ) : (
-          <p className="text-sm font-bold text-y2k-muted sm:text-base">{ar.slot.available}</p>
-        )}
-      </div>
-      {canBook && (
-        <span className="y2k-slot-add" aria-hidden>
-          +
+      <span className="m-slot-time" dir="ltr">{formatTimeDisplay(appointment.time_slot)}</span>
+      <span className={avail ? "m-badge-available" : booked ? "m-badge-booked" : "m-badge-blocked"}>
+        {statusLabelAr(appointment.status)}
+      </span>
+      {avail && (
+        <span style={{
+          marginInlineStart: "auto",
+          width: 28, height: 28, borderRadius: "50%",
+          background: "var(--m-elevated2)",
+          border: "1px solid var(--m-border)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: "1rem", color: "var(--m-brown-light)",
+          flexShrink: 0,
+        }} aria-hidden>+</span>
+      )}
+      {!avail && (
+        <span style={{ fontFamily: "var(--font-thmanyah)", fontWeight: 300, fontSize: "0.8rem", color: "var(--m-muted)", marginInlineStart: "auto" }}>
+          {booked ? ar.slot.booked : ar.slot.unavailable}
         </span>
       )}
     </button>

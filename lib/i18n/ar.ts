@@ -1,4 +1,4 @@
-import type { AppointmentStatus } from "@/lib/types";
+import type { AppointmentStatus, ServiceType } from "@/lib/types";
 
 export const ar = {
   nav: {
@@ -6,13 +6,20 @@ export const ar = {
     admin: "الإدارة",
   },
   home: {
-    title: "أيام الجدول",
-    subtitle: "افتح يوماً لعرض الحجوزات وحجز مواعيد كل ساعة.",
+    title: "احجز موعدك",
+    subtitle: "اختر يوماً من الاثنين إلى السبت — من ١٢ ظهراً حتى ١٠ مساءً",
+    prevWeek: "الأسبوع السابق",
+    nextWeek: "الأسبوع القادم",
+    sundayClosed: "الأحد — عطلة أسبوعية",
+    loading: "جاري التحميل...",
+    noSlots: "لا توجد مواعيد",
+    today: "اليوم",
+    closed: "مغلق",
+    // legacy (kept for any remaining references)
     openToday: "جدول اليوم",
     addDay: "إضافة يوم جديد",
     noDays: "لا توجد أيام في الجدول بعد.",
     addFirstDay: "أضف أول يوم",
-    today: "اليوم",
     editDay: "تعديل اسم اليوم",
     deleteDay: "حذف اليوم",
     deleteConfirm: "هل تريد حذف هذا اليوم وجميع مواعيده؟ لا يمكن التراجع.",
@@ -28,7 +35,7 @@ export const ar = {
   day: {
     backDays: "كل الأيام",
     backHome: "الرئيسية",
-    hoursRange: "كل ساعة — ٢٤ ساعة",
+    hoursRange: "من ١٢ ظهراً حتى ١٠ مساءً",
     bookedCount: (n: number) => `${n} محجوز`,
     otherCount: (n: number) => `${n} متاح أو مغلق`,
     loadError:
@@ -40,19 +47,30 @@ export const ar = {
     blocked: "مغلق",
     unavailable: "غير متاح",
   },
+  services: {
+    hair: "شعر فقط",
+    beard: "لحية فقط",
+    hair_beard: "شعر ولحية",
+  } as Record<ServiceType, string>,
   booking: {
     title: "حجز موعد",
-    customerName: "اسم العميل",
+    customerName: "الاسم",
     placeholder: "مثال: علي",
+    phone: "رقم الهاتف",
+    phonePlaceholder: "+966 5...",
+    service: "نوع الخدمة",
     cancel: "إلغاء",
     save: "تأكيد الحجز",
     saving: "جاري الحفظ…",
-    nameRequired: "يرجى إدخال اسم العميل",
+    nameRequired: "يرجى إدخال الاسم",
+    phoneRequired: "يرجى إدخال رقم الهاتف",
+    serviceRequired: "يرجى اختيار نوع الخدمة",
     saveFailed: "فشل الحفظ",
+    alreadyBooked: "هذا الموعد محجوز بالفعل",
   },
   addDay: {
     title: "إضافة يوم جديد",
-    subtitle: "يُنشئ مواعيد كل ساعة ليوم واحد (٢٤ ساعة).",
+    subtitle: "يُنشئ مواعيد كل ساعة ليوم واحد.",
     dateLabel: "اختر التاريخ",
     dateHint: "اضغط لفتح التقويم واختيار اليوم",
     datePreview: "التاريخ المختار",
@@ -87,9 +105,11 @@ export const ar = {
     date: "التاريخ",
     time: "الوقت",
     customer: "العميل",
+    phone: "الهاتف",
+    service: "الخدمة",
     status: "الحالة",
     actions: "إجراءات",
-    empty: "لا توجد مواعيد بعد. أضف يوماً من الصفحة الرئيسية أو أنشئ حجزاً أعلاه.",
+    empty: "لا توجد مواعيد بعد.",
     edit: "تعديل",
     save: "حفظ",
     clear: "مسح",
@@ -98,17 +118,30 @@ export const ar = {
     updateFailed: "فشل التحديث",
     addFailed: "فشل الإضافة",
     dash: "—",
+    notifTitle: "مركز الإشعارات",
+    notifSubtitle: "جميع الحجوزات المؤكدة",
+    notifRefresh: "تحديث",
+    notifEmpty: "لا توجد حجوزات مؤكدة بعد",
+    notifUnknown: "—",
   },
   notFound: {
     title: "الصفحة غير موجودة",
     home: "الرئيسية",
   },
   meta: {
-    title: "جدول الحلاقة",
-    description: "حجز مواعيد الحلاقة",
+    title: "حجز مواعيد الحلاقة",
+    description: "احجز موعدك بسهولة",
+  },
+  footer: {
+    support: "للدعم والاستفسار:",
   },
 } as const;
 
 export function statusLabelAr(status: AppointmentStatus): string {
   return ar.slot[status];
+}
+
+export function serviceLabelAr(service: ServiceType | null | undefined): string {
+  if (!service) return ar.admin.notifUnknown;
+  return ar.services[service] ?? ar.admin.notifUnknown;
 }

@@ -2,42 +2,111 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --y2k-bg: #080a0f;
-  --y2k-surface: #121820;
-  --y2k-gold: #d4a017;
-  --y2k-electric: #2d7ff9;
-  --y2k-white: #f4f6fa;
+/* ── Thmanyah Serif Display ── */
+@font-face {
+  font-family: "Thmanyah";
+  src: url("./fonts/thmanyahserifdisplay-Light.otf") format("opentype");
+  font-weight: 300;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Thmanyah";
+  src: url("./fonts/thmanyahserifdisplay-Regular.otf") format("opentype");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Thmanyah";
+  src: url("./fonts/thmanyahserifdisplay-Medium.otf") format("opentype");
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Thmanyah";
+  src: url("./fonts/thmanyahserifdisplay-Bold.otf") format("opentype");
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Thmanyah";
+  src: url("./fonts/thmanyahserifdisplay-Black.otf") format("opentype");
+  font-weight: 900;
+  font-display: swap;
 }
 
+/* ── CSS variables ── */
+:root {
+  --m-bg:            #0c0806;
+  --m-surface:       #161009;
+  --m-elevated:      #201610;
+  --m-elevated2:     #2a1d13;
+  --m-brown:         #a0724a;
+  --m-brown-dim:     #7a5539;
+  --m-brown-light:   #c8956a;
+  --m-cream:         #ede0cc;
+  --m-cream-2:       #c0aa8e;
+  --m-muted:         #806a58;
+  --m-border:        rgba(160, 114, 74, 0.18);
+  --m-border-hover:  rgba(200, 149, 106, 0.45);
+  --m-red:           #c0392b;
+  --m-red-dim:       #3d1210;
+  --font-thmanyah:   "Thmanyah";
+}
+
+/* ── Keyframes ── */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes slideUp {
+  from { transform: translateY(24px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+@keyframes scaleInBounce {
+  0%   { transform: scale(0.82); opacity: 0; }
+  60%  { transform: scale(1.04); }
+  100% { transform: scale(1);    opacity: 1; }
+}
+@keyframes drawCircle {
+  from { stroke-dashoffset: 230; }
+  to   { stroke-dashoffset: 0; }
+}
+@keyframes drawCheck {
+  from { stroke-dashoffset: 65; opacity: 0; }
+  to   { stroke-dashoffset: 0;  opacity: 1; }
+}
+@keyframes textReveal {
+  from { transform: translateY(10px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+@keyframes progressShrink {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(0); }
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}
+
+/* ── Base ── */
 @layer base {
-  body {
-    @apply min-h-screen overflow-x-hidden bg-y2k-black font-bold text-y2k-white antialiased;
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
-    background-image:
-      linear-gradient(180deg, rgba(212, 160, 23, 0.06) 0%, transparent 28%),
-      linear-gradient(165deg, #0a0c10 0%, #0f1623 55%, #080a0f 100%);
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html {
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
-  body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-    opacity: 0.04;
-    background-image:
-      linear-gradient(45deg, #d4a017 25%, transparent 25%),
-      linear-gradient(-45deg, #d4a017 25%, transparent 25%),
-      linear-gradient(45deg, transparent 75%, #d4a017 75%),
-      linear-gradient(-45deg, transparent 75%, #d4a017 75%);
-    background-size: 18px 18px;
-    background-position:
-      0 0,
-      0 9px,
-      9px -9px,
-      -9px 0;
+  body {
+    background-color: var(--m-bg);
+    color: var(--m-cream);
+    font-family: var(--font-thmanyah), serif;
+    font-weight: 400;
+    min-height: 100svh;
+    overflow-x: hidden;
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
   }
 
   [dir="rtl"] input,
@@ -47,321 +116,608 @@
   }
 }
 
+/* ── Components ── */
 @layer components {
-  .y2k-shell {
-    @apply relative z-10;
+
+  /* Shell */
+  .m-shell { @apply relative z-10; }
+
+  /* ── Header ── */
+  .m-header {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    background-color: rgba(12, 8, 6, 0.92);
+    border-bottom: 1px solid var(--m-border);
+    backdrop-filter: blur(12px);
   }
 
-  .y2k-header {
-    @apply sticky top-0 z-40 border-b-[3px] border-y2k-gold bg-y2k-surface/95 shadow-y2k-sm backdrop-blur-md;
+  .m-logo-latin {
+    font-family: var(--font-thmanyah), serif;
+    font-weight: 300;
+    font-size: 0.6rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--m-muted);
   }
 
-  .y2k-logo {
-    @apply flex min-h-11 min-w-0 flex-col leading-tight;
+  .m-logo-ar {
+    font-family: var(--font-thmanyah), serif;
+    font-weight: 900;
+    font-size: 1.15rem;
+    color: var(--m-cream);
+    letter-spacing: 0.01em;
   }
 
-  .y2k-logo-latin {
-    @apply font-display text-[10px] font-normal uppercase tracking-[0.35em] text-y2k-gold sm:text-xs;
+  .m-nav-link {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.35rem 0.85rem;
+    font-family: var(--font-thmanyah), serif;
+    font-weight: 400;
+    font-size: 0.85rem;
+    color: var(--m-cream-2);
+    border-radius: 100px;
+    border: 1px solid transparent;
+    transition: color 0.2s, border-color 0.2s;
+  }
+  .m-nav-link:hover {
+    color: var(--m-cream);
+    border-color: var(--m-border);
   }
 
-  .y2k-logo-ar {
-    @apply text-lg font-black text-y2k-white sm:text-xl;
+  /* ── Typography ── */
+  .m-heading {
+    font-family: var(--font-thmanyah), serif;
+    font-weight: 900;
+    font-size: clamp(1.6rem, 4vw, 2.4rem);
+    color: var(--m-cream);
+    line-height: 1.2;
+    letter-spacing: -0.01em;
   }
 
-  .y2k-nav-link {
-    @apply inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border-2 border-transparent px-3 text-sm font-black text-y2k-white transition hover:border-y2k-gold hover:bg-y2k-raised hover:text-y2k-gold sm:min-w-0;
+  .m-subtitle {
+    font-family: var(--font-thmanyah), serif;
+    font-weight: 300;
+    font-size: 0.9rem;
+    color: var(--m-muted);
+    margin-top: 0.4rem;
+    letter-spacing: 0.01em;
   }
 
-  .y2k-heading {
-    @apply text-2xl font-black leading-tight text-y2k-white sm:text-3xl;
+  .m-section-label {
+    font-family: var(--font-thmanyah), serif;
+    font-weight: 300;
+    font-size: 0.7rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--m-muted);
   }
 
-  .y2k-heading::before {
-    content: "✦ ★ ✦";
-    @apply mb-1 block font-display text-sm tracking-[0.4em] text-y2k-gold;
+  /* ── Buttons ── */
+  .m-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.75rem;
+    padding: 0.6rem 1.6rem;
+    font-family: var(--font-thmanyah), serif;
+    font-weight: 700;
+    font-size: 0.875rem;
+    color: var(--m-bg);
+    background-color: var(--m-brown-light);
+    border-radius: 100px;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.15s, opacity 0.2s;
+    letter-spacing: 0.01em;
+  }
+  .m-btn-primary:hover { background-color: var(--m-cream-2); transform: translateY(-1px); }
+  .m-btn-primary:active { transform: translateY(0); }
+  .m-btn-primary:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+  .m-btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.75rem;
+    padding: 0.6rem 1.6rem;
+    font-family: var(--font-thmanyah), serif;
+    font-weight: 500;
+    font-size: 0.875rem;
+    color: var(--m-cream-2);
+    background-color: transparent;
+    border: 1px solid var(--m-border);
+    border-radius: 100px;
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s, transform 0.15s;
+  }
+  .m-btn-secondary:hover {
+    color: var(--m-cream);
+    border-color: var(--m-border-hover);
+    transform: translateY(-1px);
+  }
+  .m-btn-secondary:active { transform: translateY(0); }
+  .m-btn-secondary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .m-btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.3rem 0.6rem;
+    font-family: var(--font-thmanyah), serif;
+    font-weight: 400;
+    font-size: 0.8rem;
+    color: var(--m-brown-light);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: color 0.2s, background 0.2s;
+  }
+  .m-btn-ghost:hover { color: var(--m-cream); background: var(--m-elevated); }
+
+  /* ── Cards ── */
+  .m-card {
+    background-color: var(--m-surface);
+    border: 1px solid var(--m-border);
+    border-radius: 16px;
+    padding: 1.25rem;
   }
 
-  .y2k-heading-compact::before {
-    @apply text-xs tracking-[0.3em];
+  .m-card-link {
+    background-color: var(--m-surface);
+    border: 1px solid var(--m-border);
+    border-radius: 16px;
+    padding: 1.25rem;
+    display: block;
+    transition: border-color 0.2s, background-color 0.2s, transform 0.2s;
+    cursor: pointer;
+  }
+  .m-card-link:hover {
+    border-color: var(--m-border-hover);
+    background-color: var(--m-elevated);
+    transform: translateY(-2px);
   }
 
-  .y2k-subtitle {
-    @apply mt-2 text-sm font-bold text-y2k-muted sm:text-base;
+  .m-panel {
+    background-color: var(--m-surface);
+    border: 1px solid var(--m-border);
+    border-radius: 20px;
+    padding: 1.25rem;
   }
 
-  .y2k-meta {
-    @apply text-sm font-black text-y2k-electric;
+  /* ── Inputs ── */
+  .m-input {
+    width: 100%;
+    background-color: var(--m-elevated);
+    border: 1px solid var(--m-border);
+    border-radius: 12px;
+    padding: 0.8rem 1rem;
+    font-family: var(--font-thmanyah), serif;
+    font-weight: 400;
+    font-size: 0.95rem;
+    color: var(--m-cream);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .m-input::placeholder { color: var(--m-muted); }
+  .m-input:focus { border-color: var(--m-brown-light); }
+
+  /* ── Badges ── */
+  .m-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.65rem;
+    border-radius: 100px;
+    font-family: var(--font-thmanyah), serif;
+    font-weight: 500;
+    font-size: 0.72rem;
+    letter-spacing: 0.03em;
   }
 
-  .y2k-link-back {
-    @apply mb-6 inline-flex min-h-10 items-center rounded-full border-2 border-y2k-gold bg-y2k-raised px-4 text-sm font-black text-y2k-white shadow-y2k-sm transition hover:-translate-y-0.5 hover:bg-y2k-surface hover:text-y2k-gold;
+  .m-badge-available {
+    @apply m-badge;
+    background-color: rgba(160, 114, 74, 0.12);
+    border: 1px solid rgba(160, 114, 74, 0.35);
+    color: var(--m-brown-light);
   }
 
-  .y2k-btn-primary {
-    @apply inline-flex min-h-11 items-center justify-center rounded-full border-[3px] border-y2k-gold bg-gradient-to-b from-y2k-gold-light to-y2k-gold px-6 py-2.5 text-center text-sm font-black text-y2k-black shadow-y2k transition hover:-translate-y-0.5 hover:shadow-y2k-lg active:translate-y-0 active:shadow-y2k-sm disabled:opacity-50;
+  .m-badge-booked {
+    @apply m-badge;
+    background-color: rgba(192, 57, 43, 0.1);
+    border: 1px solid rgba(192, 57, 43, 0.3);
+    color: #e07060;
   }
 
-  .y2k-btn-secondary {
-    @apply inline-flex min-h-11 items-center justify-center rounded-full border-[3px] border-y2k-gold bg-y2k-raised px-6 py-2.5 text-sm font-black text-y2k-white shadow-y2k-dark transition hover:-translate-y-0.5 hover:border-y2k-electric hover:text-y2k-electric active:translate-y-0;
+  .m-badge-blocked {
+    @apply m-badge;
+    background-color: rgba(128, 106, 88, 0.1);
+    border: 1px solid rgba(128, 106, 88, 0.2);
+    color: var(--m-muted);
   }
 
-  .y2k-btn-ghost {
-    @apply inline-flex min-h-10 items-center rounded-full px-3 text-sm font-black text-y2k-gold transition hover:bg-y2k-raised hover:text-y2k-gold-light hover:underline;
-  }
-
-  .y2k-card {
-    @apply rounded-2xl border-[3px] border-y2k-gold/80 bg-y2k-surface p-5 shadow-y2k-dark;
-  }
-
-  .y2k-card-interactive {
-    @apply y2k-card block transition hover:-translate-y-1 hover:border-y2k-gold hover:shadow-y2k active:translate-y-0;
-  }
-
-  .y2k-card-title {
-    @apply text-lg font-black text-y2k-white;
-  }
-
-  .y2k-card-date {
-    @apply mt-1 block font-mono text-sm font-bold text-y2k-electric;
-  }
-
-  .y2k-pill-tag {
-    @apply mt-2 inline-block rounded-full border-2 border-y2k-gold bg-y2k-black px-3 py-0.5 text-xs font-black text-y2k-gold;
-  }
-
-  .y2k-empty {
-    @apply rounded-2xl border-[3px] border-dashed border-y2k-gold/50 bg-y2k-surface/80 p-8 text-center shadow-y2k-dark sm:p-12;
-  }
-
-  .y2k-empty-text {
-    @apply font-bold text-y2k-muted;
-  }
-
-  .y2k-panel {
-    @apply rounded-2xl border-[3px] border-y2k-gold/70 bg-y2k-surface p-4 shadow-y2k-dark sm:p-5;
-  }
-
-  .y2k-input {
-    @apply w-full rounded-2xl border-[3px] border-y2k-gold/60 bg-y2k-black px-4 py-3 font-bold text-y2k-white outline-none transition placeholder:text-y2k-muted focus:border-y2k-electric focus:ring-2 focus:ring-y2k-electric/25;
-  }
-
-  .y2k-date-field {
-    @apply space-y-3;
-  }
-
-  .y2k-date-picker-wrap {
-    @apply relative;
-  }
-
-  .y2k-date-input {
-    @apply y2k-input min-h-12 w-full appearance-none text-base;
-    color-scheme: dark;
-  }
-
-  .y2k-date-input::-webkit-date-and-time-value {
-    min-height: 1.5rem;
+  /* ── Time Slots ── */
+  .m-slot {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.9rem 1rem;
+    border-radius: 14px;
+    border: 1px solid transparent;
+    width: 100%;
     text-align: start;
+    transition: border-color 0.2s, background-color 0.2s, transform 0.15s;
   }
 
-  .y2k-date-input-empty {
-    @apply text-transparent;
+  .m-slot-available {
+    @apply m-slot;
+    background-color: var(--m-surface);
+    border-color: var(--m-border);
+    cursor: pointer;
+  }
+  .m-slot-available:hover {
+    border-color: var(--m-border-hover);
+    background-color: var(--m-elevated);
+    transform: translateY(-1px);
+  }
+  .m-slot-available:active { transform: translateY(0); }
+
+  .m-slot-booked {
+    @apply m-slot;
+    background-color: rgba(61, 18, 16, 0.4);
+    border-color: rgba(192, 57, 43, 0.2);
+    cursor: default;
+    opacity: 0.75;
   }
 
-  .y2k-date-placeholder {
-    @apply pointer-events-none absolute inset-y-0 start-4 end-4 flex items-center gap-2 text-sm font-bold text-y2k-muted;
+  .m-slot-blocked {
+    @apply m-slot;
+    background-color: var(--m-surface);
+    border-color: transparent;
+    cursor: default;
+    opacity: 0.45;
   }
 
-  .y2k-date-preview {
-    @apply rounded-2xl border-2 border-y2k-gold/50 bg-y2k-black px-4 py-3 text-center;
+  .m-slot-time {
+    font-family: var(--font-thmanyah), serif;
+    font-weight: 500;
+    font-size: clamp(0.82rem, 3vw, 0.95rem);
+    color: var(--m-brown-light);
+    flex-shrink: 0;
+    white-space: nowrap;
   }
 
-  .y2k-date-preview-label {
-    @apply mb-1 block text-xs font-bold text-y2k-muted;
+  /* ── Divider ── */
+  .m-divider {
+    height: 1px;
+    background-color: var(--m-border);
+    margin: 1.5rem 0;
   }
 
-  .y2k-date-preview-value {
-    @apply text-lg font-black text-y2k-gold;
+  /* ── Empty State ── */
+  .m-empty {
+    border: 1px dashed var(--m-border);
+    border-radius: 20px;
+    padding: 3rem 1.5rem;
+    text-align: center;
+    background-color: var(--m-surface);
   }
 
-  .y2k-modal-overlay {
-    @apply fixed inset-0 z-50 flex items-end justify-center bg-black/80 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-sm sm:items-center sm:p-4;
+  /* ── Error ── */
+  .m-error {
+    border: 1px solid rgba(192, 57, 43, 0.3);
+    border-radius: 16px;
+    padding: 1.25rem;
+    background-color: rgba(61, 18, 16, 0.4);
+    font-family: var(--font-thmanyah), serif;
+    font-weight: 400;
+    color: #e07060;
   }
 
-  .y2k-modal {
-    @apply max-h-[min(90dvh,100%)] w-full max-w-md overflow-y-auto rounded-t-3xl border-[3px] border-y2k-gold bg-y2k-surface p-5 shadow-y2k-lg sm:rounded-3xl sm:p-6;
+  /* ── Back link ── */
+  .m-link-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: var(--font-thmanyah), serif;
+    font-weight: 400;
+    font-size: 0.85rem;
+    color: var(--m-muted);
+    border-radius: 100px;
+    border: 1px solid var(--m-border);
+    padding: 0.4rem 0.9rem;
+    margin-bottom: 1.5rem;
+    transition: color 0.2s, border-color 0.2s;
+  }
+  .m-link-back:hover { color: var(--m-cream); border-color: var(--m-border-hover); }
+
+  /* ── Modal ── */
+  .m-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    background-color: rgba(12, 8, 6, 0.85);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 0;
+    animation: fadeIn 0.2s ease;
+  }
+  @media (min-width: 640px) {
+    .m-modal-overlay {
+      align-items: center;
+      padding: 1rem;
+    }
   }
 
-  .y2k-modal-title {
-    @apply text-xl font-black text-y2k-white;
+  .m-modal {
+    width: 100%;
+    max-width: 26rem;
+    max-height: min(95dvh, 100%);
+    overflow-y: auto;
+    background-color: var(--m-surface);
+    border: 1px solid var(--m-border);
+    border-top: 1px solid var(--m-border-hover);
+    border-radius: 20px 20px 0 0;
+    padding: 1.25rem 1rem 2rem;
+    padding-bottom: max(2rem, env(safe-area-inset-bottom));
+    animation: slideUp 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  @media (min-width: 640px) {
+    .m-modal {
+      border-radius: 20px;
+      padding: 1.75rem;
+      border-top: 1px solid var(--m-border);
+    }
   }
 
-  .y2k-modal-title::before {
-    content: "★ ";
-    @apply text-y2k-gold;
+  .m-modal-title {
+    font-family: var(--font-thmanyah), serif;
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: var(--m-cream);
   }
 
-  .y2k-error {
-    @apply rounded-2xl border-[3px] border-y2k-red bg-y2k-raised p-4 text-sm font-bold text-red-300 shadow-y2k-dark sm:p-6 sm:text-base;
+  /* ── Booking Confirmation ── */
+  .m-confirm-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    background-color: rgba(12, 8, 6, 0.93);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    animation: fadeIn 0.25s ease;
   }
 
-  .y2k-error-link {
-    @apply mt-4 inline-block font-black text-y2k-gold hover:underline;
+  .m-confirm-card {
+    background-color: var(--m-surface);
+    border: 1px solid var(--m-border);
+    border-radius: 28px;
+    padding: 2.5rem 2rem;
+    text-align: center;
+    max-width: 22rem;
+    width: 100%;
+    animation: scaleInBounce 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
-  /* Time slots */
-  .y2k-slot {
-    @apply flex h-full w-full min-w-0 flex-col gap-2 rounded-2xl border-[3px] p-3 text-start shadow-y2k-dark transition sm:flex-row sm:items-center sm:gap-3 sm:p-4;
+  .m-confirm-ring {
+    width: 88px;
+    height: 88px;
+    margin: 0 auto 1.5rem;
+    color: var(--m-brown-light);
   }
 
-  .y2k-slot-available {
-    @apply y2k-slot cursor-pointer border-y2k-gold/70 bg-y2k-raised hover:-translate-y-0.5 hover:border-y2k-gold hover:shadow-y2k active:scale-[0.99];
+  .m-confirm-circle {
+    stroke-dasharray: 230;
+    stroke-dashoffset: 230;
+    animation: drawCircle 0.5s ease 0.1s forwards;
   }
 
-  .y2k-slot-booked {
-    @apply y2k-slot cursor-default border-y2k-red bg-gradient-to-br from-y2k-raised to-y2k-red-dark/40;
+  .m-confirm-check {
+    stroke-dasharray: 65;
+    stroke-dashoffset: 65;
+    animation: drawCheck 0.35s ease 0.55s forwards;
   }
 
-  .y2k-slot-blocked {
-    @apply y2k-slot cursor-default border-y2k-muted/50 bg-y2k-surface opacity-85;
+  .m-confirm-title {
+    font-family: var(--font-thmanyah), serif;
+    font-weight: 900;
+    font-size: 2.8rem;
+    color: var(--m-cream);
+    line-height: 1;
+    animation: textReveal 0.35s ease 0.75s both;
   }
 
-  .y2k-slot-time {
-    @apply shrink-0 font-display text-sm font-black text-y2k-gold sm:w-24;
+  .m-confirm-sub {
+    font-family: var(--font-thmanyah), serif;
+    font-weight: 300;
+    font-size: 0.85rem;
+    color: var(--m-muted);
+    margin-top: 0.4rem;
+    animation: textReveal 0.35s ease 0.9s both;
   }
 
-  .y2k-slot-add {
-    @apply ms-auto flex h-9 w-9 shrink-0 items-center justify-center self-end rounded-full border-2 border-y2k-gold bg-y2k-gold text-lg font-black text-y2k-black shadow-y2k-sm sm:order-4 sm:h-8 sm:w-8;
+  .m-confirm-detail {
+    font-family: var(--font-thmanyah), serif;
+    font-weight: 500;
+    font-size: 0.95rem;
+    color: var(--m-brown-light);
+    margin-top: 0.6rem;
+    animation: textReveal 0.35s ease 0.85s both;
   }
 
-  .y2k-badge {
-    @apply shrink-0 rounded-full border-2 px-2.5 py-0.5 text-xs font-black sm:order-3;
+  .m-confirm-progress-track {
+    height: 2px;
+    background-color: var(--m-elevated2);
+    border-radius: 1px;
+    margin-top: 2rem;
+    overflow: hidden;
+    animation: textReveal 0.3s ease 1.1s both;
   }
 
-  .y2k-badge-available {
-    @apply y2k-badge border-y2k-gold bg-y2k-black text-y2k-gold;
+  .m-confirm-progress-bar {
+    height: 100%;
+    width: 100%;
+    background-color: var(--m-brown);
+    border-radius: 1px;
+    transform-origin: right;
+    animation: progressShrink 2.6s linear 1.1s forwards;
   }
 
-  .y2k-badge-booked {
-    @apply y2k-badge border-y2k-red bg-y2k-red-dark text-red-200;
+  /* ── Day tab (week selector) ── */
+  .m-day-tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 0.4rem 0.15rem;
+    border-radius: 12px;
+    border: 1px solid var(--m-border);
+    background-color: var(--m-surface);
+    transition: border-color 0.2s, background-color 0.2s;
+    cursor: pointer;
+    user-select: none;
+    min-width: 0;
+    overflow: hidden;
+  }
+  .m-day-tab:hover { border-color: var(--m-border-hover); background-color: var(--m-elevated); }
+
+  .m-day-tab-active {
+    background-color: var(--m-brown);
+    border-color: var(--m-brown);
+  }
+  .m-day-tab-active:hover { background-color: var(--m-brown-light); border-color: var(--m-brown-light); }
+
+
+  /* ── Admin calendar ── */
+  .m-admin-cal-nav { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+  .m-admin-cal-month {
+    font-family: var(--font-thmanyah), serif;
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--m-cream);
+    text-align: center;
+  }
+  .m-admin-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+  .m-admin-cal-weekday {
+    font-family: var(--font-thmanyah), serif;
+    font-weight: 300;
+    font-size: 0.7rem;
+    text-align: center;
+    color: var(--m-muted);
+    padding: 0.3rem 0;
+  }
+  .m-admin-cal-cell { aspect-ratio: 1; }
+  .m-admin-cal-day {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    font-family: var(--font-thmanyah), serif;
+    font-weight: 400;
+    font-size: 0.85rem;
+    color: var(--m-muted);
+    transition: all 0.15s;
+    cursor: pointer;
+  }
+  .m-admin-cal-day-has { border-color: var(--m-border); color: var(--m-cream-2); background-color: var(--m-elevated); }
+  .m-admin-cal-day-has:hover { border-color: var(--m-border-hover); }
+  .m-admin-cal-day-selected { background-color: var(--m-brown); border-color: var(--m-brown); color: var(--m-bg); }
+  .m-admin-cal-day-today { outline: 1px solid var(--m-brown-light); outline-offset: 2px; }
+  .m-admin-cal-dot { width: 4px; height: 4px; border-radius: 50%; background-color: var(--m-brown-light); margin-top: 2px; }
+  .m-admin-cal-day-selected .m-admin-cal-dot { background-color: var(--m-bg); }
+
+  /* ── Table ── */
+  .m-table { width: 100%; font-size: 0.85rem; }
+  .m-table thead { background-color: var(--m-elevated); }
+  .m-table th {
+    padding: 0.75rem 1rem;
+    text-align: start;
+    font-family: var(--font-thmanyah), serif;
+    font-weight: 500;
+    color: var(--m-muted);
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .m-table tbody { }
+  .m-table tr { border-top: 1px solid var(--m-border); transition: background-color 0.15s; }
+  .m-table tr:hover { background-color: var(--m-elevated); }
+  .m-table td {
+    padding: 0.75rem 1rem;
+    font-family: var(--font-thmanyah), serif;
+    font-weight: 400;
+    color: var(--m-cream-2);
   }
 
-  .y2k-badge-blocked {
-    @apply y2k-badge border-y2k-muted bg-y2k-surface text-y2k-muted;
+  .m-table-wrap {
+    overflow-x: auto;
+    border-radius: 16px;
+    border: 1px solid var(--m-border);
+    background-color: var(--m-surface);
   }
 
-  .y2k-badge-admin-available {
-    @apply rounded-full border-2 border-y2k-gold bg-y2k-black px-2.5 py-0.5 text-xs font-black text-y2k-gold;
+  /* ── Pill tag ── */
+  .m-pill {
+    display: inline-block;
+    padding: 0.15rem 0.6rem;
+    border-radius: 100px;
+    font-family: var(--font-thmanyah), serif;
+    font-weight: 300;
+    font-size: 0.7rem;
+    background-color: var(--m-elevated2);
+    color: var(--m-brown-light);
+    border: 1px solid var(--m-border);
   }
 
-  .y2k-badge-admin-booked {
-    @apply rounded-full border-2 border-y2k-red bg-y2k-red-dark px-2.5 py-0.5 text-xs font-black text-red-200;
+  /* ── Service option button ── */
+  .m-service-opt {
+    padding: 0.7rem 0.5rem;
+    border-radius: 12px;
+    border: 1px solid var(--m-border);
+    background-color: var(--m-elevated);
+    font-family: var(--font-thmanyah), serif;
+    font-weight: 500;
+    font-size: 0.85rem;
+    color: var(--m-cream-2);
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    width: 100%;
   }
+  .m-service-opt:hover { border-color: var(--m-border-hover); color: var(--m-cream); }
 
-  .y2k-badge-admin-blocked {
-    @apply rounded-full border-2 border-y2k-muted bg-y2k-surface px-2.5 py-0.5 text-xs font-black text-y2k-muted;
+  .m-service-opt-active {
+    background-color: var(--m-brown);
+    border-color: var(--m-brown);
+    color: var(--m-bg);
   }
+  .m-service-opt-active:hover { background-color: var(--m-brown-light); border-color: var(--m-brown-light); }
 
-  .y2k-table-wrap {
-    @apply hidden overflow-x-auto rounded-2xl border-[3px] border-y2k-gold/70 bg-y2k-surface shadow-y2k-dark md:block;
+  /* ── Notification entry ── */
+  .m-notif-entry {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    background-color: var(--m-elevated);
+    border: 1px solid var(--m-border);
+    transition: border-color 0.15s;
   }
+  .m-notif-entry:hover { border-color: var(--m-border-hover); }
 
-  .y2k-day-table-wrap {
-    @apply overflow-x-auto rounded-2xl border-[3px] border-y2k-gold/70 bg-y2k-surface shadow-y2k-dark;
-  }
-
-  .y2k-admin-cal {
-    @apply y2k-panel space-y-3;
-  }
-
-  .y2k-admin-cal-nav {
-    @apply flex items-center justify-between gap-2;
-  }
-
-  .y2k-admin-cal-month {
-    @apply text-center text-lg font-black text-y2k-gold;
-  }
-
-  .y2k-admin-cal-grid {
-    @apply grid grid-cols-7 gap-1 sm:gap-2;
-  }
-
-  .y2k-admin-cal-weekday {
-    @apply py-1 text-center text-[10px] font-black text-y2k-muted sm:text-xs;
-  }
-
-  .y2k-admin-cal-cell {
-    @apply aspect-square min-h-[2.5rem] sm:min-h-[2.75rem];
-  }
-
-  .y2k-admin-cal-day {
-    @apply flex h-full w-full flex-col items-center justify-center rounded-xl border-2 border-transparent text-sm font-black text-y2k-muted transition sm:text-base;
-  }
-
-  .y2k-admin-cal-day-has {
-    @apply border-y2k-gold/50 bg-y2k-raised text-y2k-white hover:border-y2k-gold;
-  }
-
-  .y2k-admin-cal-day-selected {
-    @apply border-y2k-gold bg-y2k-gold text-y2k-black shadow-y2k-sm;
-  }
-
-  .y2k-admin-cal-day-today {
-    @apply ring-2 ring-y2k-electric ring-offset-2 ring-offset-y2k-surface;
-  }
-
-  .y2k-admin-cal-dot {
-    @apply mt-0.5 h-1 w-1 rounded-full bg-y2k-gold;
-  }
-
-  .y2k-admin-cal-day-selected .y2k-admin-cal-dot {
-    @apply bg-y2k-black;
-  }
-
-  .y2k-admin-day-panel {
-    @apply y2k-panel space-y-4;
-  }
-
-  .y2k-admin-row-booked {
-    @apply bg-y2k-red-dark/25;
-  }
-
-  .y2k-admin-row-available td {
-    @apply text-green-400;
-  }
-
-  .y2k-table {
-    @apply w-full text-sm;
-  }
-
-  .y2k-table thead {
-    @apply bg-y2k-black font-black text-y2k-gold;
-  }
-
-  .y2k-table th {
-    @apply px-4 py-3 text-start;
-  }
-
-  .y2k-table tbody {
-    @apply divide-y-[2px] divide-y2k-gold/15;
-  }
-
-  .y2k-table tr {
-    @apply transition hover:bg-y2k-raised;
-  }
-
-  .y2k-table td {
-    @apply px-4 py-3 font-bold text-y2k-white;
-  }
-
-  .y2k-admin-card {
-    @apply rounded-2xl border-[3px] border-y2k-gold/60 bg-y2k-raised p-4 shadow-y2k-dark;
-  }
-
-  .y2k-icon-btn {
-    @apply inline-flex h-9 w-9 items-center justify-center rounded-full border-2 border-y2k-gold/50 bg-y2k-black text-y2k-gold shadow-y2k-sm transition hover:border-y2k-gold hover:bg-y2k-raised hover:text-y2k-gold-light;
-  }
-
-  .y2k-icon-btn-danger {
-    @apply hover:border-y2k-red hover:text-red-300;
-  }
+  /* ── Animate-in utility ── */
+  .m-anim-fade { animation: fadeIn 0.3s ease; }
+  .m-anim-up   { animation: slideUp 0.35s cubic-bezier(0.22, 1, 0.36, 1); }
 }
