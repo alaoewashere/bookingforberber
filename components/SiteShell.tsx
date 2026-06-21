@@ -14,18 +14,18 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
       <header className="m-header m-shell">
         <div className="mx-auto flex max-w-4xl items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4">
           <Link href="/" className="flex flex-col leading-tight">
-            <span className="m-logo-ar">✂ {lang === "tr" ? "Huzayfa" : "حُذيفة"}</span>
+            <span className="m-logo-ar">✂ {lang === "ar" ? "حُذيفة" : "Huzayfa"}</span>
           </Link>
           <nav className="flex shrink-0 items-center gap-1">
             <Link href="/" className="m-nav-link">{t.nav.home}</Link>
             <Link href="/admin" className="m-nav-link">{t.nav.admin}</Link>
             <button
               type="button"
-              onClick={() => setLang(lang === "ar" ? "tr" : "ar")}
+              onClick={() => setLang(lang === "ar" ? "tr" : lang === "tr" ? "en" : "ar")}
               className="m-nav-link"
               style={{ fontSize: "0.7rem", opacity: 0.65, letterSpacing: "0.05em" }}
             >
-              {lang === "ar" ? "TR" : "AR"}
+              {lang === "ar" ? "TR" : lang === "tr" ? "EN" : "AR"}
             </button>
           </nav>
         </div>

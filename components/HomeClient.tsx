@@ -114,9 +114,7 @@ export default function HomeClient() {
 
       {/* Page header */}
       <div className="mb-7 sm:mb-10">
-        <p className="m-section-label mb-1.5">
-          {t.dir === "rtl" ? "مرحباً بك" : "Hoş Geldiniz"}
-        </p>
+        <p className="m-section-label mb-1.5">{t.home.welcome}</p>
         <h1 className="m-heading">{t.home.title}</h1>
         <p className="m-subtitle">{t.home.subtitle}</p>
       </div>

@@ -1,11 +1,11 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { arT, trT, type CustomerT } from "@/lib/i18n/translations";
+import { arT, trT, enT, type CustomerT } from "@/lib/i18n/translations";
 
-export type Lang = "ar" | "tr";
+export type Lang = "ar" | "tr" | "en";
 
-const TRANSLATIONS: Record<Lang, CustomerT> = { ar: arT, tr: trT };
+const TRANSLATIONS: Record<Lang, CustomerT> = { ar: arT, tr: trT, en: enT };
 
 interface LangCtx {
   lang: Lang;
@@ -22,7 +22,7 @@ export function LangProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const saved = localStorage.getItem("lang") as Lang | null;
-    if (saved === "ar" || saved === "tr") {
+    if (saved === "ar" || saved === "tr" || saved === "en") {
       setLangState(saved);
     } else {
       setShowPicker(true);

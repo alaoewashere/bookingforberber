@@ -3,6 +3,7 @@ export type CustomerT = {
   home: {
     title: string;
     subtitle: string;
+    welcome: string;
     prevWeek: string;
     nextWeek: string;
     loading: string;
@@ -41,6 +42,7 @@ export const arT: CustomerT = {
   home: {
     title: "احجز موعدك",
     subtitle: "اختر يوماً من الاثنين إلى السبت — من ١٢ ظهراً حتى ١٠ مساءً",
+    welcome: "مرحباً بك",
     prevWeek: "الأسبوع السابق",
     nextWeek: "الأسبوع القادم",
     loading: "جاري التحميل...",
@@ -74,11 +76,51 @@ export const arT: CustomerT = {
   locale: "ar-SA-u-ca-gregory",
 };
 
+export const enT: CustomerT = {
+  nav: { home: "Home", admin: "Admin" },
+  home: {
+    title: "Book Appointment",
+    subtitle: "Monday to Saturday — 12 PM to 10 PM",
+    welcome: "Welcome",
+    prevWeek: "Previous Week",
+    nextWeek: "Next Week",
+    loading: "Loading...",
+    noSlots: "No appointments",
+    today: "Today",
+  },
+  weekdays: ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],
+  months: ["January","February","March","April","May","June","July","August","September","October","November","December"],
+  slot: { available: "Available", booked: "Booked", blocked: "Closed" },
+  services: { hair: "Hair Only", beard: "Beard Only", hair_beard: "Hair & Beard" },
+  booking: {
+    title: "Book Appointment",
+    customerName: "Full Name",
+    placeholder: "e.g. Ali",
+    phone: "Phone",
+    phonePlaceholder: "+1 ...",
+    service: "Service Type",
+    cancel: "Cancel",
+    save: "Confirm",
+    saving: "Saving…",
+    nameRequired: "Please enter your name",
+    phoneRequired: "Please enter your phone number",
+    serviceRequired: "Please select a service",
+    saveFailed: "Booking failed",
+    alreadyBooked: "This slot is already booked",
+    successTitle: "Done",
+    successSub: "Your appointment has been booked",
+  },
+  footer: { support: "For support:" },
+  dir: "ltr",
+  locale: "en-US",
+};
+
 export const trT: CustomerT = {
   nav: { home: "Ana Sayfa", admin: "Yönetim" },
   home: {
     title: "Randevu Al",
     subtitle: "Pazartesi'den Cumartesi'ye — öğle 12:00'dan gece 22:00'a kadar",
+    welcome: "Hoş Geldiniz",
     prevWeek: "Önceki Hafta",
     nextWeek: "Sonraki Hafta",
     loading: "Yükleniyor...",

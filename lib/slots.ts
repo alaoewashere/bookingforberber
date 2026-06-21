@@ -72,10 +72,15 @@ export function generateTimeSlots(): string[] {
 
 /** Stable across server/client (avoids Intl punctuation differences).
  *  Arabic: ص = noon–5 PM, م = 6–10 PM. Turkish: S = noon–5 PM, G = 6–10 PM. */
-export function formatTimeDisplay(timeSlot: string, lang: "ar" | "tr" = "ar"): string {
+export function formatTimeDisplay(timeSlot: string, lang: "ar" | "tr" | "en" = "ar"): string {
   const [h24, min] = timeSlot.split(":").map(Number);
   let h12 = h24 % 12;
   if (h12 === 0) h12 = 12;
+
+  if (lang === "en") {
+    const minPart = min === 0 ? "" : `:${String(min).padStart(2, "0")}`;
+    return `${h12}${minPart} PM`;
+  }
 
   if (lang === "tr") {
     const period = h24 < 18 ? "S" : "G";
