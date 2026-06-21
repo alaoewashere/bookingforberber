@@ -43,17 +43,6 @@ export default function LangPicker({ onSelect }: { onSelect: (l: Lang) => void }
       }}
     >
       <div style={{ textAlign: "center" }}>
-        <p style={{
-          fontFamily: "var(--font-thmanyah)",
-          fontWeight: 300,
-          fontSize: "0.75rem",
-          color: "var(--m-muted)",
-          letterSpacing: "0.1em",
-          textTransform: "uppercase",
-          marginBottom: "0.75rem",
-        }}>
-          Barber Booking — ✂ Huzayfa
-        </p>
         <h1 style={{
           fontFamily: "var(--font-thmanyah)",
           fontWeight: 700,
