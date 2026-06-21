@@ -58,7 +58,7 @@ export const arT: CustomerT = {
     customerName: "الاسم",
     placeholder: "مثال: علي",
     phone: "رقم الهاتف",
-    phonePlaceholder: "+966 5...",
+    phonePlaceholder: "+90 5...",
     service: "نوع الخدمة",
     cancel: "إلغاء",
     save: "تأكيد الحجز",
