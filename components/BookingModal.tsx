@@ -39,14 +39,22 @@ export default function BookingModal({ appointment, open, onClose, onBook }: Boo
   useEffect(() => {
     if (open) {
       setName(""); setPhone(""); setService(""); setError(""); setPhase("form");
+      // iOS Safari requires position:fixed to truly lock scroll
+      const scrollY = window.scrollY;
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = "100%";
       document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
+      return () => {
+        document.body.style.position = "";
+        document.body.style.top = "";
+        document.body.style.width = "";
+        document.body.style.overflow = "";
+        window.scrollTo(0, scrollY);
+        if (timerRef.current) clearTimeout(timerRef.current);
+      };
     }
-    return () => {
-      document.body.style.overflow = "";
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
   }, [open, appointment?.id]);
 
   if (!open || !appointment) return null;
