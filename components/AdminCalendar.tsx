@@ -66,12 +66,21 @@ export default function AdminCalendar({ initialAppointments }: AdminCalendarProp
   }, [rows, selectedDate]);
 
   const bookedByDate = useMemo(() => {
+    // Sort: today first → future dates ascending → past dates descending
     const booked = rows.filter((r) => r.status === "booked")
-      .sort((a, b) => b.date.localeCompare(a.date) || a.time_slot.localeCompare(b.time_slot));
+      .sort((a, b) => {
+        const aIsToday = a.date === today ? 0 : a.date > today ? 1 : 2;
+        const bIsToday = b.date === today ? 0 : b.date > today ? 1 : 2;
+        if (aIsToday !== bIsToday) return aIsToday - bIsToday;
+        // Within futures: ascending (closest first); within pasts: descending (most recent first)
+        const asc = a.date > today;
+        return asc ? a.date.localeCompare(b.date) : b.date.localeCompare(a.date)
+          || a.time_slot.localeCompare(b.time_slot);
+      });
     const map = new Map<string, Appointment[]>();
     booked.forEach((r) => { const list = map.get(r.date) ?? []; list.push(r); map.set(r.date, list); });
     return map;
-  }, [rows]);
+  }, [rows, today]);
 
   const totalBooked = useMemo(() => Array.from(bookedByDate.values()).reduce((s, a) => s + a.length, 0), [bookedByDate]);
 
