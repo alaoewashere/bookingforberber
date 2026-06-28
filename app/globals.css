@@ -122,6 +122,9 @@
   /* Shell */
   .m-shell { @apply relative z-10; }
 
+  /* Hide footer while booking modal is open so links can't be tapped accidentally */
+  body.modal-open footer { display: none; }
+
   /* ── Header ── */
   .m-header {
     position: sticky;
