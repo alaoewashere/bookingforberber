@@ -41,7 +41,8 @@ export default function AdminCalendar({ initialAppointments }: AdminCalendarProp
   const [tab,          setTab]          = useState<Tab>("calendar");
   const [editingNotifId, setEditingNotifId] = useState<string | null>(null);
   const [editNotif,      setEditNotif]      = useState<{ name: string; phone: string; service: string }>({ name: "", phone: "", service: "" });
-  const [seenIds, setSeenIds] = useState<Set<string>>(new Set());
+  const [seenIds,        setSeenIds]        = useState<Set<string>>(new Set());
+  const [openDates,      setOpenDates]      = useState<Set<string>>(new Set());
 
   useEffect(() => {
     try {
@@ -66,13 +67,18 @@ export default function AdminCalendar({ initialAppointments }: AdminCalendarProp
 
   const bookedByDate = useMemo(() => {
     const booked = rows.filter((r) => r.status === "booked")
-      .sort((a, b) => a.date.localeCompare(b.date) || a.time_slot.localeCompare(b.time_slot));
+      .sort((a, b) => b.date.localeCompare(a.date) || a.time_slot.localeCompare(b.time_slot));
     const map = new Map<string, Appointment[]>();
     booked.forEach((r) => { const list = map.get(r.date) ?? []; list.push(r); map.set(r.date, list); });
     return map;
   }, [rows]);
 
   const totalBooked = useMemo(() => Array.from(bookedByDate.values()).reduce((s, a) => s + a.length, 0), [bookedByDate]);
+
+  useEffect(() => {
+    const firstKey = Array.from(bookedByDate.keys())[0];
+    if (firstKey) setOpenDates((prev) => prev.size === 0 ? new Set([firstKey]) : prev);
+  }, [bookedByDate]);
 
   const newCount = useMemo(() => {
     let count = 0;
@@ -245,12 +251,29 @@ export default function AdminCalendar({ initialAppointments }: AdminCalendarProp
           {bookedByDate.size === 0 ? (
             <div className="m-empty"><p style={{ ...F, fontWeight: 300, color: "var(--m-muted)" }}>{ar.admin.notifEmpty}</p></div>
           ) : (
-            Array.from(bookedByDate.entries()).map(([date, appts]) => (
+            Array.from(bookedByDate.entries()).map(([date, appts]) => {
+              const isOpen = openDates.has(date);
+              const toggle = () => setOpenDates((prev) => {
+                const next = new Set(prev);
+                isOpen ? next.delete(date) : next.add(date);
+                return next;
+              });
+              return (
               <div key={date} className="m-panel space-y-3">
-                <p style={{ ...F, fontWeight: 700, fontSize: "0.9rem", color: "var(--m-brown-light)", letterSpacing: "0.01em" }}>
-                  {formatDateLabel(date)}
-                </p>
-                <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={toggle}
+                  style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                >
+                  <p style={{ ...F, fontWeight: 700, fontSize: "0.9rem", color: "var(--m-brown-light)", letterSpacing: "0.01em" }}>
+                    {formatDateLabel(date)}
+                  </p>
+                  <span style={{ color: "var(--m-muted)", fontSize: "0.8rem", display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                    <span style={{ ...F, fontSize: "0.72rem" }}>{appts.length}</span>
+                    <span style={{ transition: "transform 0.2s", display: "inline-block", transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }}>▼</span>
+                  </span>
+                </button>
+                {isOpen && <div className="space-y-2">
                   {appts.map((a) => {
                     const meta = parseBookingMeta(a.notes);
                     const isEditing = editingNotifId === a.id;
@@ -320,9 +343,10 @@ export default function AdminCalendar({ initialAppointments }: AdminCalendarProp
                       </div>
                     );
                   })}
-                </div>
+                </div>}
               </div>
-            ))
+              );
+            })
           )}
         </div>
       ) : (
