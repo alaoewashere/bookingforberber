@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
 import { clearAppointmentSlot, upsertAppointment } from "@/lib/appointments";
-import { parseBookingMeta } from "@/lib/types";
 import { createServerClient } from "@/lib/supabase";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { readJsonObject } from "@/lib/request-security";
-import { validateService } from "@/lib/moderation/server";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -45,37 +43,10 @@ export async function PATCH(request: Request, context: RouteContext) {
       return NextResponse.json(data);
     }
 
-    if (body.status === "booked" || body.customer_name !== undefined) {
-      if (existing.status !== "booked") {
-        return NextResponse.json({ error: "Email verification is required for new bookings" }, { status: 403 });
-      }
-      const name =
-        typeof body.customer_name === "string"
-          ? body.customer_name.trim()
-          : (existing.customer_name as string) ?? "";
-      if (!name) {
-        return NextResponse.json(
-          { error: "Customer name required for booked status" },
-          { status: 400 }
-        );
-      }
-      const existingMeta = parseBookingMeta(existing.notes as string | null);
-      const phone = typeof body.phone === "string" ? body.phone.trim() : (existingMeta?.phone ?? "");
-      const service = body.service === undefined ? existingMeta?.service : validateService(body.service);
-      const data = await upsertAppointment({
-        date,
-        time_slot,
-        customer_name: name,
-        first_name: typeof body.first_name === "string" ? body.first_name : undefined,
-        last_name: typeof body.last_name === "string" ? body.last_name : undefined,
-        email: typeof existing.email === "string" ? existing.email : undefined,
-        email_verified: existing.email_verified === true,
-        status: "booked",
-        phone,
-        service,
-        booked_at: typeof existing.booked_at === "string" ? existing.booked_at : null,
-      });
-      return NextResponse.json(data);
+    // This route controls slots only. Customer-controlled text can enter a
+    // booking exclusively through the verified /book route.
+    if (body.status === "booked" || body.customer_name !== undefined || body.first_name !== undefined || body.last_name !== undefined || body.phone !== undefined || body.service !== undefined) {
+      return NextResponse.json({ error: "Email verification is required for booking changes" }, { status: 403 });
     }
 
     return NextResponse.json(existing);

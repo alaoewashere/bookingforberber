@@ -73,4 +73,14 @@ export function validateCustomerNameField(input: unknown): string {
   return normalized;
 }
 
+/** Validate both structured name fields together to catch split phrases. */
+export function validateCustomerNamePair(firstName: unknown, lastName: unknown): { firstName: string; lastName: string } {
+  const normalizedFirstName = validateCustomerNameField(firstName);
+  const normalizedLastName = validateCustomerNameField(lastName);
+  if (hasDangerousContext(`${normalizedFirstName} ${normalizedLastName}`)) {
+    throw new Error("ABUSIVE_NAME");
+  }
+  return { firstName: normalizedFirstName, lastName: normalizedLastName };
+}
+
 export { validateEmail, validatePhone, validateService };

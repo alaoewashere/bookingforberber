@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import fs from "node:fs";
-import { moderateCustomerText, validateCustomerName, validateCustomerNameField } from "../lib/moderation/server";
+import { moderateCustomerText, validateCustomerName, validateCustomerNameField, validateCustomerNamePair } from "../lib/moderation/server";
 import { normalizeCustomerName, validateEmail, validateNameField, validateNameShape } from "../lib/moderation/normalize";
 import { isValidDateParam, isWithinPublicBookingRange, normalizeTimeSlot } from "../lib/slots";
 
@@ -46,6 +46,12 @@ test("both name fields receive centralized multilingual moderation", () => {
   for (const value of ["كس", "s.i.k", "f.u.c.k", "merde", "scheisse", "mierda", "stronzo", "caralho", "блядь", "کیر", "हरामी", "傻逼", "くそ", "씨발"]) {
     assert.throws(() => validateCustomerNameField(value), value);
   }
+});
+
+test("name moderation also evaluates a phrase split across two fields", () => {
+  assert.deepEqual(validateCustomerNamePair("Omar", "Hussein"), { firstName: "Omar", lastName: "Hussein" });
+  assert.throws(() => validateCustomerNamePair("mother", "fucker"), /ABUSIVE_NAME/);
+  assert.throws(() => validateCustomerNamePair("سأ", "قتلك"), /ABUSIVE_NAME/);
 });
 
 test("empty, long, URL, HTML, script, SQL-like, and symbol spam names are rejected", () => {
@@ -116,6 +122,16 @@ test("public booking accepts only first_name and last_name", () => {
   assert.doesNotMatch(route, /PUBLIC_BOOKING_KEYS[^\n]*customer_name/);
   assert.match(route, /EMAIL_COOLDOWN/);
   assert.match(route, /يمكنك استخدامه بعد يومين/);
+  assert.match(route, /validateCustomerNamePair/);
+});
+
+test("public clients never receive customer names and slot updates reject text", () => {
+  const appointments = fs.readFileSync(new URL("../lib/appointments.ts", import.meta.url), "utf8");
+  const publicPage = fs.readFileSync(new URL("../components/HomeClient.tsx", import.meta.url), "utf8");
+  const updateRoute = fs.readFileSync(new URL("../app/api/appointments/[id]/route.ts", import.meta.url), "utf8");
+  assert.match(appointments, /customer_name: null/);
+  assert.doesNotMatch(publicPage, /slot\.customer_name/);
+  assert.match(updateRoute, /Email verification is required for booking changes/);
 });
 
 test("admin sessions are signed and admin-created bookings require the verified booking route", () => {

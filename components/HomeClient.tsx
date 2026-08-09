@@ -255,15 +255,6 @@ export default function HomeClient() {
                 <span className={avail ? "m-badge-available" : booked ? "m-badge-booked" : "m-badge-blocked"}>
                   {avail ? t.slot.available : booked ? t.slot.booked : t.slot.blocked}
                 </span>
-                {booked && slot.customer_name && (
-                  <span style={{
-                    fontFamily: "var(--font-thmanyah)", fontWeight: 400, fontSize: "0.75rem",
-                    color: "var(--m-cream-2)", marginInlineStart: "0.4rem", overflow: "hidden",
-                    textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0,
-                  }}>
-                    {slot.customer_name}
-                  </span>
-                )}
                 {avail && (
                   <span style={{
                     marginInlineStart: "auto",

@@ -1,6 +1,6 @@
 import type { Appointment, AppointmentStatus, ServiceType } from "@/lib/types";
 import { generateTimeSlots, isValidDateParam, isWithinPublicBookingRange, normalizeTimeSlot } from "@/lib/slots";
-import { validateCustomerName, validateCustomerNameField, validateEmail, validatePhone, validateService } from "@/lib/moderation/server";
+import { validateCustomerName, validateCustomerNameField, validateCustomerNamePair, validateEmail, validatePhone, validateService } from "@/lib/moderation/server";
 import { createServerClient } from "@/lib/supabase";
 
 const UPSERT_CONFLICT = "date,time_slot";
@@ -12,7 +12,7 @@ export function toPublicAppointment(appointment: Appointment) {
     id: appointment.id,
     date: appointment.date,
     time_slot: appointment.time_slot,
-    customer_name: appointment.customer_name,
+    customer_name: null,
     status: appointment.status,
     created_at: appointment.created_at,
   };
@@ -223,8 +223,7 @@ export async function bookAppointment(
   if (!isWithinPublicBookingRange(date)) throw new Error("INVALID_BOOKING");
   const normalizedSlot = normalizeTimeSlot(time_slot);
   if (!normalizedSlot) throw new Error("INVALID_BOOKING");
-  const normalizedFirstName = validateCustomerNameField(first_name);
-  const normalizedLastName = validateCustomerNameField(last_name);
+  const { firstName: normalizedFirstName, lastName: normalizedLastName } = validateCustomerNamePair(first_name, last_name);
   const normalizedEmail = validateEmail(email);
   const normalizedPhone = validatePhone(phone ?? "");
   const normalizedService = validateService(service ?? "hair");

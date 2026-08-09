@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { bookAppointment, toPublicAppointment } from "@/lib/appointments";
 import { isValidDateParam, isWithinPublicBookingRange, normalizeTimeSlot } from "@/lib/slots";
-import { validateCustomerNameField, validateEmail, validatePhone, validateService } from "@/lib/moderation/server";
+import { validateCustomerNamePair, validateEmail, validatePhone, validateService } from "@/lib/moderation/server";
 import { createServerClient, getAuthenticatedEmail } from "@/lib/supabase";
 import { getBookingRateLimitKeys, hasOnlyKeys, RATE_LIMIT_MAX_ATTEMPTS, RATE_LIMIT_WINDOW_SECONDS, readJsonObject } from "@/lib/request-security";
 import { randomBytes } from "node:crypto";
@@ -32,8 +32,9 @@ export async function POST(request: Request) {
     let normalizedEmail: string;
     let service: "hair" | "beard" | "hair_beard";
     try {
-      normalizedFirstName = validateCustomerNameField(first_name);
-      normalizedLastName = validateCustomerNameField(last_name);
+      const nameParts = validateCustomerNamePair(first_name, last_name);
+      normalizedFirstName = nameParts.firstName;
+      normalizedLastName = nameParts.lastName;
     } catch (error) {
       const code = error instanceof Error ? error.message : "";
       return NextResponse.json({ error: code === "MULTIPLE_WORDS" ? "يرجى إدخال كلمة واحدة فقط." : "الرجاء إدخال اسم صحيح." }, { status: 400 });

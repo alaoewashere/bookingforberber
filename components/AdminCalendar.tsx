@@ -33,6 +33,8 @@ export default function AdminCalendar({ initialAppointments }: AdminCalendarProp
   const [viewMonth,    setViewMonth]    = useState(todayParts.month);
   const firstBookedDate = initialAppointments.find((appointment) => appointment.status === "booked")?.date ?? null;
   const [selectedDate, setSelectedDate] = useState<string | null>(firstBookedDate);
+  // Kept only so historic component state is harmless if a stale client bundle
+  // is open. The server rejects all customer-text changes on this endpoint.
   const [editingId,    setEditingId]    = useState<string | null>(null);
   const [editName,     setEditName]     = useState("");
   const [showAdd,      setShowAdd]      = useState(false);
@@ -141,11 +143,8 @@ export default function AdminCalendar({ initialAppointments }: AdminCalendarProp
   async function handleSaveEdit(row: Appointment) {
     setLoading(true);
     try {
-      const res = await fetch(`/api/appointments/${row.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "booked", customer_name: editName.trim() }) });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? ar.admin.updateFailed);
-      refreshRow(json as Appointment); setEditingId(null);
-    } finally { setLoading(false); }
+      await fetch(`/api/appointments/${row.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "booked", customer_name: editName.trim() }) });
+    } finally { setLoading(false); setEditingId(null); }
   }
 
   async function handleClear(id: string) {
@@ -242,11 +241,8 @@ export default function AdminCalendar({ initialAppointments }: AdminCalendarProp
   }
 
   function customerCell(row: Appointment) {
-    if (editingId === row.id) return (
-      <input value={editName} onChange={(e) => setEditName(e.target.value)} className="m-input !py-1 max-w-[160px]" style={{ fontSize: "0.82rem" }} />
-    );
     if (row.status === "available") return <span style={{ ...F, color: "var(--m-green)", fontWeight: 400 }}>—</span>;
-    if (row.status === "booked") return <span style={{ ...F, color: "var(--m-cream)", fontWeight: 500 }}>{row.first_name && row.last_name ? `${row.first_name} ${row.last_name}` : row.customer_name ?? "—"}</span>;
+    if (row.status === "booked") return <span style={{ ...F, color: "var(--m-cream)", fontWeight: 500 }}>{row.first_name && row.last_name ? `${row.first_name} ${row.last_name}` : "—"}</span>;
     return <span style={{ ...F, color: "var(--m-muted)" }}>مغلق</span>;
   }
 
@@ -259,7 +255,6 @@ export default function AdminCalendar({ initialAppointments }: AdminCalendarProp
     );
     return (
       <div className="flex gap-1">
-        {row.status === "booked" && <button type="button" onClick={() => { setEditingId(row.id); setEditName(row.customer_name ?? ""); }} className="m-btn-ghost" style={{ fontSize: "0.78rem" }}>{ar.admin.edit}</button>}
         {(row.status === "booked" || row.status === "blocked") && <button type="button" onClick={() => handleClear(row.id)} disabled={loading} className="m-btn-ghost" style={{ fontSize: "0.78rem" }}>{ar.admin.clear}</button>}
         {row.status === "blocked" ? (
           <button type="button" onClick={() => handleOpen(row.id)} disabled={loading} className="m-btn-ghost" style={{ fontSize: "0.78rem", color: "var(--m-green)" }}>{ar.admin.open}</button>
