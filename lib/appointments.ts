@@ -4,6 +4,8 @@ import { validateCustomerName, validateEmail, validatePhone, validateService } f
 import { createServerClient } from "@/lib/supabase";
 
 const UPSERT_CONFLICT = "date,time_slot";
+const ADMIN_APPOINTMENT_COLUMNS = "id, date, time_slot, customer_name, email, email_verified, phone, phone_verified, service, status, notes, created_at";
+const ADMIN_PAGE_SIZE = 1000;
 
 export function toPublicAppointment(appointment: Appointment) {
   return {
@@ -48,14 +50,26 @@ export async function getAppointmentsByDate(date: string): Promise<Appointment[]
 
 export async function getAllAppointments(): Promise<Appointment[]> {
   const supabase = createServerClient();
-  const { data, error } = await supabase
-    .from("appointments")
-    .select("*")
-    .order("date", { ascending: false })
-    .order("time_slot", { ascending: true });
+  const appointments: Appointment[] = [];
 
-  if (error) throw error;
-  return (data ?? []) as Appointment[];
+  // Supabase Data API responses are limited to 1,000 rows by default. The
+  // admin view must also receive older bookings when the table contains many
+  // future availability rows, so load the complete result in stable pages.
+  for (let offset = 0; ; offset += ADMIN_PAGE_SIZE) {
+    const { data, error } = await supabase
+      .from("appointments")
+      .select(ADMIN_APPOINTMENT_COLUMNS)
+      .order("date", { ascending: false })
+      .order("time_slot", { ascending: true })
+      .range(offset, offset + ADMIN_PAGE_SIZE - 1);
+
+    if (error) throw error;
+    const page = (data ?? []) as Appointment[];
+    appointments.push(...page);
+    if (page.length < ADMIN_PAGE_SIZE) break;
+  }
+
+  return appointments;
 }
 
 export async function getAppointmentsByCustomer(

@@ -30,7 +30,8 @@ export default function AdminCalendar({ initialAppointments }: AdminCalendarProp
   const [rows,         setRows]         = useState(initialAppointments);
   const [viewYear,     setViewYear]     = useState(todayParts.year);
   const [viewMonth,    setViewMonth]    = useState(todayParts.month);
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const firstBookedDate = initialAppointments.find((appointment) => appointment.status === "booked")?.date ?? null;
+  const [selectedDate, setSelectedDate] = useState<string | null>(firstBookedDate);
   const [editingId,    setEditingId]    = useState<string | null>(null);
   const [editName,     setEditName]     = useState("");
   const [showAdd,      setShowAdd]      = useState(false);
@@ -329,7 +330,9 @@ export default function AdminCalendar({ initialAppointments }: AdminCalendarProp
                             <span style={{ ...F, fontWeight: 500, fontSize: "0.85rem", color: "var(--m-brown-light)", flexShrink: 0 }} dir="ltr">
                               {formatTimeDisplay(a.time_slot)}
                             </span>
-                            <span style={{ ...F, fontWeight: 700, color: "var(--m-cream)", flex: 1, minWidth: 0 }}>{a.customer_name ?? "—"}</span>
+                            <span style={{ ...F, fontWeight: 700, color: "var(--m-cream)", flex: 1, minWidth: 0 }}>
+                              حجز من {a.customer_name ?? "—"} — {formatDateLabel(a.date)}، الساعة {formatTimeDisplay(a.time_slot)}
+                            </span>
                             <span style={{ ...F, fontWeight: 300, color: "var(--m-cream-2)", fontSize: "0.82rem", flexShrink: 0 }} dir="ltr">
                               {meta?.phone || "—"}
                             </span>

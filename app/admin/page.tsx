@@ -17,7 +17,9 @@ export default async function AdminPage() {
   try {
     appointments = await getAllAppointments();
   } catch {
-    appointments = [];
+    // Keep the failure visible to the server instead of rendering a misleading
+    // empty dashboard when the admin data query is unavailable.
+    throw new Error("Unable to load admin appointments");
   }
 
   return <AdminDashboard appointments={appointments} />;

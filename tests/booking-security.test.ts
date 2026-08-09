@@ -87,3 +87,9 @@ test("email OTP is required before public booking", () => {
   assert.match(migration, /email_verified boolean not null default false/i);
   assert.match(migration, /add column if not exists email text/i);
 });
+
+test("admin appointments load beyond Supabase's default 1,000-row page", () => {
+  const appointments = fs.readFileSync(new URL("../lib/appointments.ts", import.meta.url), "utf8");
+  assert.match(appointments, /ADMIN_PAGE_SIZE = 1000/);
+  assert.match(appointments, /\.range\(offset, offset \+ ADMIN_PAGE_SIZE - 1\)/);
+});
