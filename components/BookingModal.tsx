@@ -11,6 +11,8 @@ interface BookingModalProps {
   appointment: Appointment | null;
   open: boolean;
   onClose: () => void;
+  /** Only the already-authenticated admin may opt out of customer email OTP. */
+  requireEmailVerification?: boolean;
   onBook: (firstName: string, lastName: string, email: string, phone: string, service: ServiceType, accessToken: string) => Promise<void>;
 }
 
@@ -26,7 +28,7 @@ function isMultipleWordsError(error: unknown): boolean {
   return error instanceof Error && error.message === "MULTIPLE_WORDS";
 }
 
-export default function BookingModal({ appointment, open, onClose, onBook }: BookingModalProps) {
+export default function BookingModal({ appointment, open, onClose, requireEmailVerification = true, onBook }: BookingModalProps) {
   const { t, lang } = useLang();
 
   const SERVICES: { value: ServiceType; label: string }[] = [
@@ -89,6 +91,10 @@ export default function BookingModal({ appointment, open, onClose, onBook }: Boo
       if (!email.trim()) { setError(t.booking.emailRequired); return; }
       try { validateEmail(email); } catch { setError(t.booking.emailInvalid); return; }
       if (!service) { setError(t.booking.serviceRequired); return; }
+      if (!requireEmailVerification) {
+        setPhase("phone");
+        return;
+      }
       setPhase("saving"); setError("");
       try { await sendEmailOtp(email.trim().toLowerCase()); }
       catch { setError(t.booking.emailSendFailed); setPhase("form"); return; }
@@ -285,7 +291,7 @@ export default function BookingModal({ appointment, open, onClose, onBook }: Boo
               {t.booking.cancel}
             </button>
             <button type="submit" disabled={phase === "saving"} className="m-btn-primary" style={{ flex: 1 }}>
-              {phase === "saving" ? t.booking.saving : phase === "form" ? t.booking.sendCode : phase === "email-code" ? t.booking.verifyCode : t.booking.save}
+              {phase === "saving" ? t.booking.saving : phase === "form" ? (requireEmailVerification ? t.booking.sendCode : t.booking.save) : phase === "email-code" ? t.booking.verifyCode : t.booking.save}
             </button>
           </div>
         </form>

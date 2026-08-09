@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
+import type { ServiceType } from "@/lib/types";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import {
-  bookAppointment,
   ensureDaySlots,
   getAllAppointments,
   upsertAppointment,
@@ -58,7 +58,6 @@ export async function POST(request: Request) {
   const date = body.date as string;
   const time_slot =
     typeof body.time_slot === "string" ? normalizeTimeSlot(body.time_slot) : "";
-  const customer_name = (body.customer_name as string)?.trim() || "";
   const first_name = typeof body.first_name === "string" ? body.first_name : undefined;
   const last_name = typeof body.last_name === "string" ? body.last_name : undefined;
   const status = (body.status as string) ?? "booked";
@@ -66,11 +65,28 @@ export async function POST(request: Request) {
   if (!isValidDateParam(date) || !time_slot) {
     return NextResponse.json({ error: "Invalid input" }, { status: 400 });
   }
-  // A booking may only be created by the email-verified /book endpoint.
-  // This prevents an authenticated admin browser from bypassing the same
-  // moderation, OTP, cooldown, and race-condition protection used publicly.
-  if (status === "booked" || customer_name || first_name || last_name) {
-    return NextResponse.json({ error: "Email verification is required for bookings" }, { status: 403 });
+  // Public bookings must use /book and email OTP. This route is available only
+  // to the signed-in admin and still runs the same server-side name, email,
+  // phone, service, slot, and duplicate-booking validation.
+  if (status === "booked") {
+    try {
+      const appointment = await upsertAppointment({
+        date,
+        time_slot,
+        first_name,
+        last_name,
+        email: typeof body.email === "string" ? body.email : undefined,
+        phone: typeof body.phone === "string" ? body.phone : undefined,
+        service: typeof body.service === "string" ? body.service as ServiceType : undefined,
+        email_verified: false,
+        phone_verified: false,
+        status: "booked",
+      });
+      return NextResponse.json(appointment);
+    } catch (e) {
+      const code = e instanceof Error ? e.message : "";
+      return NextResponse.json({ error: code === "ABUSIVE_NAME" || code === "INVALID_NAME" || code === "MULTIPLE_WORDS" ? "الرجاء إدخال اسم صحيح." : "Invalid input" }, { status: 400 });
+    }
   }
   if (status !== "available" && status !== "blocked") {
     return NextResponse.json({ error: "Invalid input" }, { status: 400 });

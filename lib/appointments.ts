@@ -157,12 +157,11 @@ export async function upsertAppointment(
   const date = payload.date;
   const time_slot = normalizeTimeSlot(payload.time_slot);
   const status = payload.status ?? "booked";
-  const first_name = status === "booked" && payload.first_name ? validateCustomerNameField(payload.first_name) : null;
-  const last_name = status === "booked" && payload.last_name ? validateCustomerNameField(payload.last_name) : null;
+  const nameParts = status === "booked" ? validateCustomerNamePair(payload.first_name ?? "", payload.last_name ?? "") : null;
+  const first_name = nameParts?.firstName ?? null;
+  const last_name = nameParts?.lastName ?? null;
   const customer_name = status === "booked"
-    ? first_name && last_name
-      ? `${first_name} ${last_name}`
-      : validateCustomerName(payload.customer_name ?? "")
+    ? `${first_name} ${last_name}`
     : "";
   const email = status === "booked" && payload.email ? validateEmail(payload.email) : null;
   const phone = status === "booked" && payload.phone ? validatePhone(payload.phone) : null;
@@ -199,6 +198,22 @@ export async function upsertAppointment(
     status,
     notes,
   };
+
+  // Staff-created bookings do not require customer OTP, but they must never
+  // overwrite an existing booking. The status predicate makes this atomic.
+  if (status === "booked") {
+    const { data, error } = await supabase
+      .from("appointments")
+      .update(row)
+      .eq("date", date)
+      .eq("time_slot", time_slot)
+      .eq("status", "available")
+      .select("*")
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) throw new Error("SLOT_UNAVAILABLE");
+    return data as Appointment;
+  }
 
   const { data, error } = await supabase
     .from("appointments")

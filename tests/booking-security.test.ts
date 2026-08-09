@@ -134,7 +134,7 @@ test("public clients never receive customer names and slot updates reject text",
   assert.match(updateRoute, /Email verification is required for booking changes/);
 });
 
-test("admin sessions are signed and admin-created bookings require the verified booking route", () => {
+test("admin sessions are signed and staff bookings remain server-validated", () => {
   const auth = fs.readFileSync(new URL("../lib/admin-auth.ts", import.meta.url), "utf8");
   const login = fs.readFileSync(new URL("../app/api/admin/login/route.ts", import.meta.url), "utf8");
   const loginStart = fs.readFileSync(new URL("../app/api/admin/login/start/route.ts", import.meta.url), "utf8");
@@ -153,10 +153,13 @@ test("admin sessions are signed and admin-created bookings require the verified 
   assert.match(loginStart, /getAdminRateLimitKeys/);
   assert.match(loginStart, /ADMIN_LOGIN_MAX_ATTEMPTS = 20/);
   assert.doesNotMatch(shell, /href="\/admin"/);
-  assert.match(adminCreate, /Email verification is required for bookings/);
+  assert.match(adminCreate, /isAdminAuthenticated/);
+  assert.match(adminCreate, /email_verified: false/);
+  assert.match(adminCreate, /phone_verified: false/);
   assert.match(adminCalendar, /<BookingModal/);
-  assert.match(adminCalendar, /"\/api\/appointments\/book"/);
-  assert.doesNotMatch(adminCalendar, /fetch\("\/api\/appointments", \{ method: "POST"/);
+  assert.match(adminCalendar, /requireEmailVerification=\{false\}/);
+  assert.match(adminCalendar, /fetch\("\/api\/appointments"/);
+  assert.doesNotMatch(adminCalendar, /"\/api\/appointments\/book"/);
 });
 
 test("admin dashboard sanitizes historic customer text before displaying it", () => {
@@ -182,4 +185,10 @@ test("email cooldown is atomic and based on booking time", () => {
   assert.match(migration, /pg_advisory_xact_lock/);
   assert.match(migration, /booked_at >= now\(\) - interval '2 days'/i);
   assert.match(migration, /grant execute on function public\.book_appointment_with_email_cooldown[\s\S]*to service_role/i);
+});
+
+test("staff-created bookings cannot overwrite an occupied slot", () => {
+  const appointments = fs.readFileSync(new URL("../lib/appointments.ts", import.meta.url), "utf8");
+  assert.match(appointments, /\.eq\("status", "available"\)/);
+  assert.match(appointments, /throw new Error\("SLOT_UNAVAILABLE"\)/);
 });
