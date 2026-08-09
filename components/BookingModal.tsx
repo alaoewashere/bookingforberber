@@ -82,7 +82,7 @@ export default function BookingModal({ appointment, open, onClose, onBook }: Boo
     }
 
     if (phase === "email-code") {
-      if (!/^\d{6}$/u.test(emailCode.trim())) { setError(t.booking.codeInvalid); return; }
+      if (!/^\d{6,8}$/u.test(emailCode.trim())) { setError(t.booking.codeInvalid); return; }
       setPhase("saving"); setError("");
       try { setAccessToken(await verifyEmailOtp(email.trim().toLowerCase(), emailCode.trim())); }
       catch { setError(t.booking.codeInvalid); setPhase("email-code"); return; }
@@ -201,7 +201,7 @@ export default function BookingModal({ appointment, open, onClose, onBook }: Boo
             <div style={{ marginBottom: "1.25rem" }}>
               <p style={{ ...F, fontWeight: 400, fontSize: "0.9rem", color: "var(--m-cream-2)", marginBottom: "0.75rem" }}>{t.booking.codeSent}</p>
               <label htmlFor="bm-email-code" style={{ ...F, fontWeight: 300, fontSize: "0.7rem", color: "var(--m-muted)", display: "block", marginBottom: "0.45rem" }}>{t.booking.emailCode}</label>
-              <input id="bm-email-code" type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={emailCode} onChange={(e) => setEmailCode(e.target.value.replace(/\D/gu, ""))} placeholder={t.booking.emailCodePlaceholder} className="m-input" dir="ltr" style={{ fontSize: "1.2rem", letterSpacing: "0.25em", textAlign: "center" }} autoFocus />
+              <input id="bm-email-code" type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={8} value={emailCode} onChange={(e) => setEmailCode(e.target.value.replace(/\D/gu, ""))} placeholder={t.booking.emailCodePlaceholder} className="m-input" dir="ltr" style={{ fontSize: "1.2rem", letterSpacing: "0.25em", textAlign: "center" }} autoFocus />
             </div>
           )}
 
