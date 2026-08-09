@@ -4,16 +4,17 @@ import { useEffect, useRef, useState } from "react";
 import type { Appointment, ServiceType } from "@/lib/types";
 import { formatTimeDisplay } from "@/lib/slots";
 import { useLang } from "@/lib/lang-context";
-import { validateNameShape } from "@/lib/moderation";
+import { validateEmail, validateNameShape } from "@/lib/moderation";
+import { sendEmailOtp, verifyEmailOtp } from "@/lib/email-otp";
 
 interface BookingModalProps {
   appointment: Appointment | null;
   open: boolean;
   onClose: () => void;
-  onBook: (name: string, phone: string, service: ServiceType) => Promise<void>;
+  onBook: (name: string, email: string, phone: string, service: ServiceType, accessToken: string) => Promise<void>;
 }
 
-type Phase = "form" | "saving" | "success";
+type Phase = "form" | "email-code" | "phone" | "saving" | "success";
 
 const SERVICE_ICONS: Record<ServiceType, string> = {
   hair: "✂",
@@ -31,15 +32,18 @@ export default function BookingModal({ appointment, open, onClose, onBook }: Boo
   ];
 
   const [name,    setName]    = useState("");
+  const [email,   setEmail]   = useState("");
+  const [emailCode, setEmailCode] = useState("");
   const [phone,   setPhone]   = useState("");
   const [service, setService] = useState<ServiceType | "">("");
   const [error,   setError]   = useState("");
   const [phase,   setPhase]   = useState<Phase>("form");
+  const [accessToken, setAccessToken] = useState("");
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (open) {
-      setName(""); setPhone(""); setService(""); setError(""); setPhase("form");
+      setName(""); setEmail(""); setEmailCode(""); setPhone(""); setService(""); setError(""); setPhase("form"); setAccessToken("");
       // iOS Safari requires position:fixed to truly lock scroll
       const scrollY = window.scrollY;
       document.body.style.position = "fixed";
@@ -64,6 +68,29 @@ export default function BookingModal({ appointment, open, onClose, onBook }: Boo
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (phase === "form") {
+      let n: string;
+      try { n = validateNameShape(name); } catch { setError("الرجاء إدخال اسم صحيح."); return; }
+      if (!email.trim()) { setError(t.booking.emailRequired); return; }
+      try { validateEmail(email); } catch { setError(t.booking.emailInvalid); return; }
+      if (!service) { setError(t.booking.serviceRequired); return; }
+      setPhase("saving"); setError("");
+      try { await sendEmailOtp(email.trim().toLowerCase()); }
+      catch { setError(t.booking.emailSendFailed); setPhase("form"); return; }
+      setPhase("email-code");
+      return;
+    }
+
+    if (phase === "email-code") {
+      if (!/^\d{6}$/u.test(emailCode.trim())) { setError(t.booking.codeInvalid); return; }
+      setPhase("saving"); setError("");
+      try { setAccessToken(await verifyEmailOtp(email.trim().toLowerCase(), emailCode.trim())); }
+      catch { setError(t.booking.codeInvalid); setPhase("email-code"); return; }
+      setPhase("phone");
+      return;
+    }
+
+    if (phase !== "phone") return;
     let n: string;
     try { n = validateNameShape(name); } catch { setError("الرجاء إدخال اسم صحيح."); return; }
     const p = phone.trim();
@@ -71,12 +98,12 @@ export default function BookingModal({ appointment, open, onClose, onBook }: Boo
     if (!service) { setError(t.booking.serviceRequired); return; }
     setPhase("saving"); setError("");
     try {
-      await onBook(n, p, service as ServiceType);
+      await onBook(n, email.trim().toLowerCase(), p, service as ServiceType, accessToken);
       setPhase("success");
       timerRef.current = setTimeout(onClose, 3000);
     } catch (err) {
       setError(err instanceof Error ? err.message : t.booking.saveFailed);
-      setPhase("form");
+      setPhase("phone");
     }
   }
 
@@ -141,6 +168,8 @@ export default function BookingModal({ appointment, open, onClose, onBook }: Boo
         {/* ── Body ── */}
         <form onSubmit={handleSubmit} style={{ padding: "1.25rem", paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))" }}>
 
+          {phase === "form" && (
+          <>
           {/* Name */}
           <div style={{ marginBottom: "1rem" }}>
             <label htmlFor="bm-name" style={{ ...F, fontWeight: 300, fontSize: "0.7rem", color: "var(--m-muted)", letterSpacing: "0.06em", textTransform: "uppercase", display: "block", marginBottom: "0.45rem" }}>
@@ -154,18 +183,35 @@ export default function BookingModal({ appointment, open, onClose, onBook }: Boo
             />
           </div>
 
-          {/* Phone */}
-          <div style={{ marginBottom: "1.25rem" }}>
-            <label htmlFor="bm-phone" style={{ ...F, fontWeight: 300, fontSize: "0.7rem", color: "var(--m-muted)", letterSpacing: "0.06em", textTransform: "uppercase", display: "block", marginBottom: "0.45rem" }}>
-              {t.booking.phone}
+          {/* Email */}
+          <div style={{ marginBottom: "1rem" }}>
+            <label htmlFor="bm-email" style={{ ...F, fontWeight: 300, fontSize: "0.7rem", color: "var(--m-muted)", letterSpacing: "0.06em", textTransform: "uppercase", display: "block", marginBottom: "0.45rem" }}>
+              {t.booking.email}
             </label>
             <input
-              id="bm-phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)}
-              placeholder={t.booking.phonePlaceholder}
-              className="m-input" dir="ltr"
-              style={{ fontSize: "1rem", letterSpacing: "0.03em" }}
+              id="bm-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+              placeholder={t.booking.emailPlaceholder} className="m-input" dir="ltr" style={{ fontSize: "1rem" }}
             />
           </div>
+
+          </>
+          )}
+
+          {phase === "email-code" && (
+            <div style={{ marginBottom: "1.25rem" }}>
+              <p style={{ ...F, fontWeight: 400, fontSize: "0.9rem", color: "var(--m-cream-2)", marginBottom: "0.75rem" }}>{t.booking.codeSent}</p>
+              <label htmlFor="bm-email-code" style={{ ...F, fontWeight: 300, fontSize: "0.7rem", color: "var(--m-muted)", display: "block", marginBottom: "0.45rem" }}>{t.booking.emailCode}</label>
+              <input id="bm-email-code" type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={emailCode} onChange={(e) => setEmailCode(e.target.value.replace(/\D/gu, ""))} placeholder={t.booking.emailCodePlaceholder} className="m-input" dir="ltr" style={{ fontSize: "1.2rem", letterSpacing: "0.25em", textAlign: "center" }} autoFocus />
+            </div>
+          )}
+
+          {phase === "phone" && (
+            <div style={{ marginBottom: "1.25rem" }}>
+              <p style={{ ...F, fontWeight: 400, fontSize: "0.9rem", color: "var(--m-cream-2)", marginBottom: "0.75rem" }}>{t.booking.emailVerified}</p>
+              <label htmlFor="bm-phone" style={{ ...F, fontWeight: 300, fontSize: "0.7rem", color: "var(--m-muted)", letterSpacing: "0.06em", textTransform: "uppercase", display: "block", marginBottom: "0.45rem" }}>{t.booking.phone}</label>
+              <input id="bm-phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder={t.booking.phonePlaceholder} className="m-input" dir="ltr" style={{ fontSize: "1rem", letterSpacing: "0.03em" }} autoFocus />
+            </div>
+          )}
 
           {/* Service */}
           <div style={{ marginBottom: "1.25rem" }}>
@@ -211,7 +257,7 @@ export default function BookingModal({ appointment, open, onClose, onBook }: Boo
               {t.booking.cancel}
             </button>
             <button type="submit" disabled={phase === "saving"} className="m-btn-primary" style={{ flex: 1 }}>
-              {phase === "saving" ? t.booking.saving : t.booking.save}
+              {phase === "saving" ? t.booking.saving : phase === "form" ? t.booking.sendCode : phase === "email-code" ? t.booking.verifyCode : t.booking.save}
             </button>
           </div>
         </form>

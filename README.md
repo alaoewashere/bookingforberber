@@ -19,9 +19,9 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Supabase migration
 
-Run migrations `001_create_appointments.sql` through `20260809143502_harden_appointment_data.sql` in the Supabase SQL Editor.
+Run migrations `001_create_appointments.sql` through `20260809190000_email_booking_verification.sql` in the Supabase SQL Editor.
 
-Public booking is moderated and rate-limited server-side. `SMS_OTP_REQUIRED=true` makes the final booking endpoint fail closed until an OTP verification handler calls the server booking function with `phoneVerified: true`; the current repository does not contain an SMS provider integration.
+Public booking is moderated and rate-limited server-side. Customers verify an email address with Supabase Email OTP before entering their phone number or creating an appointment. Configure the Supabase Auth email template to include `{{ .Token }}` so the message contains a six-digit code.
 
 ## Routes
 

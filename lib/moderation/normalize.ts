@@ -73,6 +73,15 @@ export function validatePhone(input: unknown): string {
   return normalized;
 }
 
+export function validateEmail(input: unknown): string {
+  if (typeof input !== "string") throw new Error("INVALID_EMAIL");
+  const normalized = input.normalize("NFKC").trim().toLowerCase();
+  if (normalized.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/u.test(normalized)) {
+    throw new Error("INVALID_EMAIL");
+  }
+  return normalized;
+}
+
 export function validateService(input: unknown): "hair" | "beard" | "hair_beard" {
   if (input === "hair" || input === "beard" || input === "hair_beard") return input;
   throw new Error("INVALID_SERVICE");

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import fs from "node:fs";
 import { moderateCustomerText, validateCustomerName } from "../lib/moderation/server";
-import { normalizeCustomerName, validateNameShape } from "../lib/moderation/normalize";
+import { normalizeCustomerName, validateEmail, validateNameShape } from "../lib/moderation/normalize";
 import { isValidDateParam, isWithinPublicBookingRange, normalizeTimeSlot } from "../lib/slots";
 
 test("normal Arabic, Turkish, and English names remain valid", () => {
@@ -47,6 +47,12 @@ test("date and time validation is strict and bounded", () => {
   assert.equal(isWithinPublicBookingRange("2026-11-09", new Date("2026-08-09T12:00:00")), false);
 });
 
+test("email verification input is normalized and validated", () => {
+  assert.equal(validateEmail("  Customer@Example.COM "), "customer@example.com");
+  assert.throws(() => validateEmail("not-an-email"), /INVALID_EMAIL/);
+  assert.throws(() => validateEmail("a".repeat(255) + "@example.com"), /INVALID_EMAIL/);
+});
+
 test("RLS migration removes public appointment mutations and grants rate limit only to service role", () => {
   const sql = fs.readFileSync(new URL("../supabase/migrations/004_booking_security.sql", import.meta.url), "utf8");
   assert.match(sql, /drop policy if exists "Allow public insert appointments"/i);
@@ -70,4 +76,14 @@ test("booking path is atomic and protected against duplicate slots", () => {
   assert.match(appointments, /\.update\(\{ customer_name: normalizedName,[\s\S]*status: "booked"/);
   assert.match(appointments, /\.eq\("date", date\)\.eq\("time_slot", normalizedSlot\)\.eq\("status", "available"\)/);
   assert.doesNotMatch(appointments, /from\("appointments"\)\s*\.insert\(/);
+});
+
+test("email OTP is required before public booking", () => {
+  const route = fs.readFileSync(new URL("../app/api/appointments/book/route.ts", import.meta.url), "utf8");
+  const migration = fs.readFileSync(new URL("../supabase/migrations/20260809190000_email_booking_verification.sql", import.meta.url), "utf8");
+  assert.match(route, /getAuthenticatedEmail/);
+  assert.match(route, /authorization/);
+  assert.match(route, /يجب تأكيد البريد الإلكتروني أولاً/);
+  assert.match(migration, /email_verified boolean not null default false/i);
+  assert.match(migration, /add column if not exists email text/i);
 });

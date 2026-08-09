@@ -18,6 +18,18 @@ export type CustomerT = {
     title: string;
     customerName: string;
     placeholder: string;
+    email: string;
+    emailPlaceholder: string;
+    emailRequired: string;
+    emailInvalid: string;
+    emailSendFailed: string;
+    codeSent: string;
+    emailCode: string;
+    emailCodePlaceholder: string;
+    codeInvalid: string;
+    emailVerified: string;
+    sendCode: string;
+    verifyCode: string;
     phone: string;
     phonePlaceholder: string;
     service: string;
@@ -57,6 +69,18 @@ export const arT: CustomerT = {
     title: "حجز موعد",
     customerName: "الاسم",
     placeholder: "مثال: علي",
+    email: "البريد الإلكتروني",
+    emailPlaceholder: "example@email.com",
+    emailRequired: "يرجى إدخال البريد الإلكتروني",
+    emailInvalid: "يرجى إدخال بريد إلكتروني صحيح",
+    emailSendFailed: "تعذر إرسال رمز التحقق إلى البريد الإلكتروني",
+    codeSent: "تم إرسال رمز التحقق إلى بريدك الإلكتروني.",
+    emailCode: "رمز التحقق",
+    emailCodePlaceholder: "أدخل الرمز المكون من 6 أرقام",
+    codeInvalid: "رمز التحقق غير صحيح أو منتهي الصلاحية",
+    emailVerified: "تم تأكيد البريد الإلكتروني. أدخل رقم الهاتف لإكمال الحجز.",
+    sendCode: "إرسال رمز التحقق",
+    verifyCode: "تأكيد الرمز",
     phone: "رقم الهاتف",
     phonePlaceholder: "+90 5...",
     service: "نوع الخدمة",
@@ -96,6 +120,18 @@ export const enT: CustomerT = {
     title: "Book Appointment",
     customerName: "Full Name",
     placeholder: "e.g. Ali",
+    email: "Email",
+    emailPlaceholder: "example@email.com",
+    emailRequired: "Please enter your email",
+    emailInvalid: "Please enter a valid email",
+    emailSendFailed: "Could not send the verification code",
+    codeSent: "A verification code was sent to your email.",
+    emailCode: "Verification code",
+    emailCodePlaceholder: "Enter the 6-digit code",
+    codeInvalid: "The verification code is invalid or expired",
+    emailVerified: "Email verified. Enter your phone number to finish.",
+    sendCode: "Send verification code",
+    verifyCode: "Verify code",
     phone: "Phone",
     phonePlaceholder: "+1 ...",
     service: "Service Type",
@@ -135,6 +171,18 @@ export const trT: CustomerT = {
     title: "Randevu Al",
     customerName: "Ad Soyad",
     placeholder: "örn: Ali",
+    email: "E-posta",
+    emailPlaceholder: "example@email.com",
+    emailRequired: "Lütfen e-posta adresinizi girin",
+    emailInvalid: "Lütfen geçerli bir e-posta girin",
+    emailSendFailed: "Doğrulama kodu gönderilemedi",
+    codeSent: "Doğrulama kodu e-postanıza gönderildi.",
+    emailCode: "Doğrulama kodu",
+    emailCodePlaceholder: "6 haneli kodu girin",
+    codeInvalid: "Doğrulama kodu geçersiz veya süresi dolmuş",
+    emailVerified: "E-posta doğrulandı. Bitirmek için telefonunuzu girin.",
+    sendCode: "Doğrulama kodu gönder",
+    verifyCode: "Kodu doğrula",
     phone: "Telefon",
     phonePlaceholder: "+90 5...",
     service: "Hizmet Türü",

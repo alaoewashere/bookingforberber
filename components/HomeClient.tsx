@@ -90,14 +90,17 @@ export default function HomeClient() {
     });
   }
 
-  async function handleBook(name: string, phone: string, service: ServiceType) {
+  async function handleBook(name: string, email: string, phone: string, service: ServiceType, accessToken: string) {
     if (!selectedSlot) return;
     const res = await fetch("/api/appointments/book", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+      },
       body: JSON.stringify({
         date: selectedSlot.date, time_slot: selectedSlot.time_slot,
-        customer_name: name, phone, service,
+        customer_name: name, email, phone, service,
       }),
     });
     const json = await res.json();
@@ -271,6 +274,7 @@ export default function HomeClient() {
         onClose={() => { setModalOpen(false); setSelectedSlot(null); }}
         onBook={handleBook}
       />
+
     </div>
   );
 }

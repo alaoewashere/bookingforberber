@@ -12,3 +12,12 @@ export function createServerClient() {
   if (!serviceRoleKey) throw new Error("SUPABASE_SERVICE_ROLE_KEY is required for server database access");
   return createClient(supabaseUrl, serviceRoleKey, { auth: { autoRefreshToken: false, persistSession: false } });
 }
+
+export async function getAuthenticatedEmail(accessToken: string): Promise<string | null> {
+  const client = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+  const { data, error } = await client.auth.getUser(accessToken);
+  if (error || !data.user?.email) return null;
+  return data.user.email.trim().toLowerCase();
+}

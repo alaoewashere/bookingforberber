@@ -21,16 +21,20 @@ export default function DaySchedule({ initialAppointments, date }: DaySchedulePr
   }, []);
 
   const handleBook = useCallback(
-    async (name: string, phone: string, service: ServiceType) => {
+    async (name: string, email: string, phone: string, service: ServiceType, accessToken: string) => {
       if (!selected) return;
 
       const res = await fetch("/api/appointments/book", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        },
         body: JSON.stringify({
           date,
           time_slot: selected.time_slot,
           customer_name: name,
+          email,
           phone,
           service,
         }),

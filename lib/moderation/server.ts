@@ -1,4 +1,4 @@
-import { compactModerationKey, normalizeCustomerName, normalizeForModeration, validateNameShape, validatePhone, validateService } from "@/lib/moderation/normalize";
+import { compactModerationKey, normalizeCustomerName, normalizeForModeration, validateEmail, validateNameShape, validatePhone, validateService } from "@/lib/moderation/normalize";
 
 // Server-only language packs. They are deliberately kept out of the client bundle.
 // This local layer catches common profanity and obfuscation even if an external
@@ -62,4 +62,4 @@ export function validateCustomerName(input: unknown): string {
   return result.normalized;
 }
 
-export { validatePhone, validateService };
+export { validateEmail, validatePhone, validateService };
