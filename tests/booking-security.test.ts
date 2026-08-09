@@ -142,9 +142,11 @@ test("admin sessions are signed and admin-created bookings require the verified 
   const adminCalendar = fs.readFileSync(new URL("../components/AdminCalendar.tsx", import.meta.url), "utf8");
   const shell = fs.readFileSync(new URL("../components/SiteShell.tsx", import.meta.url), "utf8");
   assert.match(auth, /createHmac\("sha256"/);
+  assert.match(auth, /ADMIN_SESSION_MAX_AGE_SECONDS = 60 \* 60 \* 24 \* 30/);
   assert.match(auth, /timingSafeEqual/);
   assert.doesNotMatch(auth, /value === "authenticated"/);
   assert.match(login, /sameSite: "strict"/);
+  assert.match(login, /maxAge: ADMIN_SESSION_MAX_AGE_SECONDS/);
   assert.match(login, /getAuthenticatedEmail/);
   assert.match(login, /isAllowedAdminEmail/);
   assert.match(loginStart, /sendEmailOtp/);

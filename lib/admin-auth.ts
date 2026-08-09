@@ -3,6 +3,9 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { validateEmail } from "@/lib/moderation/server";
 
 export const ADMIN_COOKIE = "barber_admin_session";
+// The admin email OTP is a device-verification step, not a per-page-view step.
+// Password changes still invalidate this signed cookie immediately.
+export const ADMIN_SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
 
 export function getAdminPassword(): string {
   return process.env.ADMIN_PASSWORD ?? "";
