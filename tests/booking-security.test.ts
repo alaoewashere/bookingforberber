@@ -141,6 +141,14 @@ test("admin dashboard sanitizes historic customer text before displaying it", ()
   assert.match(appointments, /validateCustomerName\(appointment\.customer_name\)/);
 });
 
+test("an administrator can reopen a closed slot without changing bookings", () => {
+  const calendar = fs.readFileSync(new URL("../components/AdminCalendar.tsx", import.meta.url), "utf8");
+  assert.match(calendar, /function handleOpen/);
+  assert.match(calendar, /status: "available"/);
+  assert.match(calendar, /row\.status === "blocked"/);
+  assert.match(calendar, /ar\.admin\.open/);
+});
+
 test("email cooldown is atomic and based on booking time", () => {
   const appointments = fs.readFileSync(new URL("../lib/appointments.ts", import.meta.url), "utf8");
   const migration = fs.readFileSync(new URL("../supabase/migrations/20260809165530_atomic_email_booking_cooldown.sql", import.meta.url), "utf8");

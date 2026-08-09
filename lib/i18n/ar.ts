@@ -116,6 +116,7 @@ export const ar = {
     save: "حفظ",
     clear: "مسح",
     block: "إغلاق",
+    open: "فتح",
     clearConfirm: "هل تريد مسح هذا الحجز؟",
     updateFailed: "فشل التحديث",
     addFailed: "فشل الإضافة",

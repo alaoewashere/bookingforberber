@@ -161,6 +161,12 @@ export default function AdminCalendar({ initialAppointments }: AdminCalendarProp
     finally { setLoading(false); }
   }
 
+  async function handleOpen(id: string) {
+    setLoading(true);
+    try { await patchAppointment(id, { customer_name: null, status: "available" }); }
+    finally { setLoading(false); }
+  }
+
   function handleAddBooking(e: React.FormEvent) {
     e.preventDefault();
     if (!addDate) return;
@@ -255,7 +261,11 @@ export default function AdminCalendar({ initialAppointments }: AdminCalendarProp
       <div className="flex gap-1">
         {row.status === "booked" && <button type="button" onClick={() => { setEditingId(row.id); setEditName(row.customer_name ?? ""); }} className="m-btn-ghost" style={{ fontSize: "0.78rem" }}>{ar.admin.edit}</button>}
         {(row.status === "booked" || row.status === "blocked") && <button type="button" onClick={() => handleClear(row.id)} disabled={loading} className="m-btn-ghost" style={{ fontSize: "0.78rem" }}>{ar.admin.clear}</button>}
-        {row.status !== "blocked" && <button type="button" onClick={() => handleBlock(row.id)} disabled={loading} className="m-btn-ghost" style={{ fontSize: "0.78rem", color: "var(--m-muted)" }}>{ar.admin.block}</button>}
+        {row.status === "blocked" ? (
+          <button type="button" onClick={() => handleOpen(row.id)} disabled={loading} className="m-btn-ghost" style={{ fontSize: "0.78rem", color: "var(--m-green)" }}>{ar.admin.open}</button>
+        ) : (
+          <button type="button" onClick={() => handleBlock(row.id)} disabled={loading} className="m-btn-ghost" style={{ fontSize: "0.78rem", color: "var(--m-muted)" }}>{ar.admin.block}</button>
+        )}
       </div>
     );
   }
