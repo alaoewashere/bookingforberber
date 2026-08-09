@@ -18,24 +18,8 @@ create index if not exists appointments_status_idx on public.appointments (statu
 
 alter table public.appointments enable row level security;
 
--- Allow anon read/write for this internal barber tool (tighten in production)
+-- Public clients only read availability. Server routes use the service role key for writes.
 create policy "Allow public read appointments"
   on public.appointments for select
-  to anon, authenticated
-  using (true);
-
-create policy "Allow public insert appointments"
-  on public.appointments for insert
-  to anon, authenticated
-  with check (true);
-
-create policy "Allow public update appointments"
-  on public.appointments for update
-  to anon, authenticated
-  using (true)
-  with check (true);
-
-create policy "Allow public delete appointments"
-  on public.appointments for delete
   to anon, authenticated
   using (true);

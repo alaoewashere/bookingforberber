@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Appointment, ServiceType } from "@/lib/types";
 import { formatTimeDisplay } from "@/lib/slots";
 import { useLang } from "@/lib/lang-context";
+import { validateNameShape } from "@/lib/moderation";
 
 interface BookingModalProps {
   appointment: Appointment | null;
@@ -63,8 +64,9 @@ export default function BookingModal({ appointment, open, onClose, onBook }: Boo
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const n = name.trim(), p = phone.trim();
-    if (!n) { setError(t.booking.nameRequired); return; }
+    let n: string;
+    try { n = validateNameShape(name); } catch { setError("الرجاء إدخال اسم صحيح."); return; }
+    const p = phone.trim();
     if (!p) { setError(t.booking.phoneRequired); return; }
     if (!service) { setError(t.booking.serviceRequired); return; }
     setPhase("saving"); setError("");

@@ -118,9 +118,10 @@ export function formatAdminTimeSlot(timeSlot: string): string {
 }
 
 export function normalizeTimeSlot(timeSlot: string): string {
+  if (!/^\d{2}:\d{2}$/.test(timeSlot)) return "";
   const [h, m] = timeSlot.split(":").map(Number);
-  if (Number.isNaN(h) || Number.isNaN(m)) return timeSlot;
-  return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`;
+  if (h < SLOT_START_HOUR || h > SLOT_END_HOUR || m !== 0) return "";
+  return timeSlot;
 }
 
 export function todayISO(): string {
@@ -132,5 +133,15 @@ export function todayISO(): string {
 }
 
 export function isValidDateParam(date: string): boolean {
-  return /^\d{4}-\d{2}-\d{2}$/.test(date) && !Number.isNaN(Date.parse(date + "T12:00:00"));
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return false;
+  const parsed = parseDateOnly(date);
+  return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === date;
+}
+
+export const MAX_BOOKING_DAYS_AHEAD = 90;
+export function isWithinPublicBookingRange(date: string, now = new Date()): boolean {
+  if (!isValidDateParam(date)) return false;
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const target = parseDateOnly(date); const max = new Date(today); max.setDate(max.getDate() + MAX_BOOKING_DAYS_AHEAD);
+  return target >= today && target <= max && target.getDay() !== 0;
 }

@@ -30,6 +30,11 @@ yarn-error.log*
 # vercel
 .vercel
 
+# local agent / Supabase CLI state
+.agents/
+skills-lock.json
+supabase/.temp/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

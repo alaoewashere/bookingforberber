@@ -6,7 +6,8 @@ import {
   getAllAppointments,
   upsertAppointment,
 } from "@/lib/appointments";
-import { isValidDateParam, normalizeTimeSlot } from "@/lib/slots";
+import { isValidDateParam, isWithinPublicBookingRange, normalizeTimeSlot } from "@/lib/slots";
+import { readJsonObject } from "@/lib/request-security";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -14,7 +15,7 @@ export async function GET(request: Request) {
 
   try {
     if (date) {
-      if (!isValidDateParam(date)) {
+      if (!isValidDateParam(date) || !isWithinPublicBookingRange(date)) {
         return NextResponse.json({ error: "Invalid date" }, { status: 400 });
       }
       const appointments = await ensureDaySlots(date);
@@ -47,7 +48,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await request.json();
+  const body = await readJsonObject(request);
   const date = body.date as string;
   const time_slot =
     typeof body.time_slot === "string" ? normalizeTimeSlot(body.time_slot) : "";
@@ -67,9 +68,7 @@ export async function POST(request: Request) {
     });
     return NextResponse.json(appointment);
   } catch (e) {
-    return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Server error" },
-      { status: 500 }
-    );
+    const code = e instanceof Error ? e.message : "";
+    return NextResponse.json({ error: code === "ABUSIVE_NAME" || code === "INVALID_NAME" ? "الرجاء إدخال اسم صحيح." : "Invalid input" }, { status: 400 });
   }
 }

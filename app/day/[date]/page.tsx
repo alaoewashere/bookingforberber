@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import DaySchedule from "@/components/DaySchedule";
 import { ensureDaySlots } from "@/lib/appointments";
-import { isValidDateParam } from "@/lib/slots";
+import { isValidDateParam, isWithinPublicBookingRange } from "@/lib/slots";
 import { getDayLabel } from "@/lib/day-label";
 import { getScheduleDay } from "@/lib/schedule-days";
 import { ar } from "@/lib/i18n/ar";
@@ -13,7 +13,7 @@ interface DayPageProps { params: Promise<{ date: string }>; }
 
 export default async function DayPage({ params }: DayPageProps) {
   const { date } = await params;
-  if (!isValidDateParam(date)) notFound();
+  if (!isValidDateParam(date) || !isWithinPublicBookingRange(date)) notFound();
 
   let appointments;
   try {

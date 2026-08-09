@@ -12,6 +12,9 @@ export interface Appointment {
   date: string;
   time_slot: string;
   customer_name: string | null;
+  phone: string | null;
+  service: ServiceType | null;
+  phone_verified: boolean;
   status: AppointmentStatus;
   notes: string | null;
   created_at: string;

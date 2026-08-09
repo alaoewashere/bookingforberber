@@ -1,8 +1,20 @@
 import type { Appointment, AppointmentStatus, ServiceType } from "@/lib/types";
-import { generateTimeSlots, isValidDateParam, normalizeTimeSlot } from "@/lib/slots";
+import { generateTimeSlots, isValidDateParam, isWithinPublicBookingRange, normalizeTimeSlot } from "@/lib/slots";
+import { validateCustomerName, validatePhone, validateService } from "@/lib/moderation/server";
 import { createServerClient } from "@/lib/supabase";
 
 const UPSERT_CONFLICT = "date,time_slot";
+
+export function toPublicAppointment(appointment: Appointment) {
+  return {
+    id: appointment.id,
+    date: appointment.date,
+    time_slot: appointment.time_slot,
+    customer_name: appointment.customer_name,
+    status: appointment.status,
+    created_at: appointment.created_at,
+  };
+}
 
 export async function getDistinctDates(): Promise<string[]> {
   const supabase = createServerClient();
@@ -20,12 +32,18 @@ export async function getAppointmentsByDate(date: string): Promise<Appointment[]
   const supabase = createServerClient();
   const { data, error } = await supabase
     .from("appointments")
-    .select("*")
+    .select("id, date, time_slot, customer_name, status, created_at")
     .eq("date", date)
     .order("time_slot", { ascending: true });
 
   if (error) throw error;
-  return (data ?? []) as Appointment[];
+  return (data ?? []).map((row) => {
+    let safeName: string | null = null;
+    if (typeof row.customer_name === "string") {
+      try { safeName = validateCustomerName(row.customer_name); } catch { safeName = null; }
+    }
+    return { ...row, customer_name: safeName } as Appointment;
+  });
 }
 
 export async function getAllAppointments(): Promise<Appointment[]> {
@@ -97,6 +115,7 @@ export type BookingPayload = {
   phone?: string;
   service?: ServiceType;
   status?: AppointmentStatus;
+  phone_verified?: boolean;
 };
 
 /** Upsert by (date, time_slot) — never creates duplicate slots for the same day/time */
@@ -105,10 +124,10 @@ export async function upsertAppointment(
 ): Promise<Appointment> {
   const date = payload.date;
   const time_slot = normalizeTimeSlot(payload.time_slot);
-  const customer_name = payload.customer_name.trim();
   const status = payload.status ?? "booked";
-  const phone = payload.phone?.trim() ?? "";
-  const service = payload.service;
+  const customer_name = status === "booked" ? validateCustomerName(payload.customer_name) : "";
+  const phone = status === "booked" && payload.phone ? validatePhone(payload.phone) : null;
+  const service = status === "booked" ? validateService(payload.service ?? "hair") : "hair";
 
   if (!isValidDateParam(date)) {
     throw new Error("Invalid date");
@@ -116,15 +135,13 @@ export async function upsertAppointment(
   if (!time_slot) {
     throw new Error("Invalid time slot");
   }
-  if (status === "booked" && !customer_name) {
-    throw new Error("Customer name required");
-  }
+  if (!["available", "booked", "blocked"].includes(status)) throw new Error("Invalid status");
 
   await ensureDaySlots(date);
 
   const notes =
     status === "booked" && (phone || service)
-      ? JSON.stringify({ phone: phone ?? "", service: service ?? "hair" })
+      ? JSON.stringify({ phone, service })
       : null;
 
   const supabase = createServerClient();
@@ -132,6 +149,9 @@ export async function upsertAppointment(
     date,
     time_slot,
     customer_name: status === "booked" ? customer_name : null,
+    phone: status === "booked" ? phone : null,
+    service: status === "booked" ? service : null,
+    phone_verified: status === "booked" ? payload.phone_verified ?? true : false,
     status,
     notes,
   };
@@ -151,16 +171,25 @@ export async function bookAppointment(
   time_slot: string,
   customer_name: string,
   phone?: string,
-  service?: ServiceType
+  service?: ServiceType,
+  options: { phoneVerified?: boolean } = {}
 ): Promise<Appointment> {
-  return upsertAppointment({
-    date,
-    time_slot,
-    customer_name,
-    phone,
-    service,
-    status: "booked",
-  });
+  if (!isWithinPublicBookingRange(date)) throw new Error("INVALID_BOOKING");
+  const normalizedSlot = normalizeTimeSlot(time_slot);
+  if (!normalizedSlot) throw new Error("INVALID_BOOKING");
+  const normalizedName = validateCustomerName(customer_name);
+  const normalizedPhone = validatePhone(phone ?? "");
+  const normalizedService = validateService(service ?? "hair");
+  if (process.env.SMS_OTP_REQUIRED === "true" && options.phoneVerified !== true) {
+    throw new Error("PHONE_NOT_VERIFIED");
+  }
+  const supabase = createServerClient();
+  const { data, error } = await supabase.from("appointments")
+    .update({ customer_name: normalizedName, phone: normalizedPhone, service: normalizedService, phone_verified: options.phoneVerified === true, status: "booked", notes: JSON.stringify({ phone: normalizedPhone, service: normalizedService }) })
+    .eq("date", date).eq("time_slot", normalizedSlot).eq("status", "available").select("*").maybeSingle();
+  if (error) throw error;
+  if (!data) throw new Error("SLOT_UNAVAILABLE");
+  return data as Appointment;
 }
 
 export async function clearAppointmentSlot(

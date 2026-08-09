@@ -139,7 +139,7 @@ export default function AdminCalendar({ initialAppointments }: AdminCalendarProp
   async function handleSaveEdit(row: Appointment) {
     setLoading(true);
     try {
-      const res = await fetch("/api/appointments/book", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ date: row.date, time_slot: row.time_slot, customer_name: editName.trim() }) });
+      const res = await fetch(`/api/appointments/${row.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "booked", customer_name: editName.trim() }) });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? ar.admin.updateFailed);
       refreshRow(json as Appointment); setEditingId(null);

@@ -1,38 +1,64 @@
 import { NextResponse } from "next/server";
-import { bookAppointment } from "@/lib/appointments";
-import { isValidDateParam, normalizeTimeSlot } from "@/lib/slots";
-import type { ServiceType } from "@/lib/types";
+import { bookAppointment, toPublicAppointment } from "@/lib/appointments";
+import { isValidDateParam, isWithinPublicBookingRange, normalizeTimeSlot } from "@/lib/slots";
+import { validateCustomerName, validatePhone, validateService } from "@/lib/moderation/server";
+import { createServerClient } from "@/lib/supabase";
+import { getBookingRateLimitKeys, hasOnlyKeys, RATE_LIMIT_MAX_ATTEMPTS, RATE_LIMIT_WINDOW_SECONDS, readJsonObject } from "@/lib/request-security";
+import { randomBytes } from "node:crypto";
 
-const VALID_SERVICES: ServiceType[] = ["hair", "beard", "hair_beard"];
+const PUBLIC_BOOKING_KEYS = ["date", "time_slot", "customer_name", "phone", "service"] as const;
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    const body = await readJsonObject(request);
+    if (!hasOnlyKeys(body, PUBLIC_BOOKING_KEYS)) {
+      return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
+    }
     const date = typeof body.date === "string" ? body.date : "";
     const time_slot =
       typeof body.time_slot === "string" ? normalizeTimeSlot(body.time_slot) : "";
-    const customer_name =
-      typeof body.customer_name === "string" ? body.customer_name.trim() : "";
-    const phone =
-      typeof body.phone === "string" ? body.phone.trim() : "";
-    const service: ServiceType = VALID_SERVICES.includes(body.service)
-      ? (body.service as ServiceType)
-      : "hair";
+    const customer_name = typeof body.customer_name === "string" ? body.customer_name : "";
+    const phone = typeof body.phone === "string" ? body.phone : "";
 
-    if (!isValidDateParam(date) || !time_slot) {
+    if (!isValidDateParam(date) || !isWithinPublicBookingRange(date) || !time_slot) {
       return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
     }
-    if (!customer_name) {
-      return NextResponse.json({ error: "اسم العميل مطلوب" }, { status: 400 });
+
+    let normalizedPhone: string;
+    let service: "hair" | "beard" | "hair_beard";
+    try {
+      normalizedPhone = validatePhone(phone);
+      service = validateService(body.service);
+    } catch {
+      return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
     }
 
-    const appointment = await bookAppointment(date, time_slot, customer_name, phone, service);
-    return NextResponse.json(appointment);
+    const supabase = createServerClient();
+    for (const key of getBookingRateLimitKeys(request, normalizedPhone)) {
+      const { data, error } = await supabase.rpc("consume_booking_rate_limit", { p_key: key, p_window_seconds: RATE_LIMIT_WINDOW_SECONDS, p_max_attempts: RATE_LIMIT_MAX_ATTEMPTS });
+      if (error) throw error;
+      if (data !== true) return NextResponse.json({ error: "المحاولات كثيرة، حاول لاحقاً." }, { status: 429 });
+    }
+
+    let normalizedName: string;
+    try { normalizedName = validateCustomerName(customer_name); }
+    catch { return NextResponse.json({ error: "الرجاء إدخال اسم صحيح." }, { status: 400 }); }
+
+    const appointment = await bookAppointment(date, time_slot, normalizedName, normalizedPhone, service);
+    const response = NextResponse.json(toPublicAppointment(appointment));
+    if (!request.headers.get("cookie")?.includes("booking_session=")) {
+      response.cookies.set("booking_session", randomBytes(18).toString("hex"), {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 60 * 60 * 24 * 30,
+        path: "/",
+      });
+    }
+    return response;
   } catch (e) {
-    console.error(e);
-    return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Server error" },
-      { status: 500 }
-    );
+    const code = e instanceof Error ? e.message : "";
+    const status = code === "SLOT_UNAVAILABLE" ? 409 : code === "PHONE_NOT_VERIFIED" ? 403 : code === "INVALID_BOOKING" || code === "REQUEST_TOO_LARGE" || code === "INVALID_JSON" ? 400 : 500;
+    return NextResponse.json({ error: status === 409 ? "هذا الموعد لم يعد متاحاً." : status === 400 ? "بيانات غير صالحة" : status === 403 ? "يجب تأكيد رقم الهاتف أولاً." : "Server error" }, { status });
   }
 }

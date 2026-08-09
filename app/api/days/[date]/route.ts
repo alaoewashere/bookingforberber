@@ -4,12 +4,14 @@ import {
   updateScheduleDayDisplayName,
 } from "@/lib/schedule-days";
 import { isValidDateParam } from "@/lib/slots";
+import { isAdminAuthenticated } from "@/lib/admin-auth";
 
 interface RouteContext {
   params: Promise<{ date: string }>;
 }
 
 export async function PATCH(request: Request, context: RouteContext) {
+  if (!(await isAdminAuthenticated())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { date } = await context.params;
 
   if (!isValidDateParam(date)) {
@@ -35,6 +37,7 @@ export async function PATCH(request: Request, context: RouteContext) {
 }
 
 export async function DELETE(_request: Request, context: RouteContext) {
+  if (!(await isAdminAuthenticated())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { date } = await context.params;
 
   if (!isValidDateParam(date)) {

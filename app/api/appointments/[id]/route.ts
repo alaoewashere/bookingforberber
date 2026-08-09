@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { clearAppointmentSlot, upsertAppointment } from "@/lib/appointments";
 import { parseBookingMeta } from "@/lib/types";
 import { createServerClient } from "@/lib/supabase";
+import { isAdminAuthenticated } from "@/lib/admin-auth";
+import { readJsonObject } from "@/lib/request-security";
+import { validateService } from "@/lib/moderation/server";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -17,8 +20,10 @@ async function getAppointmentById(id: string) {
 }
 
 export async function PATCH(request: Request, context: RouteContext) {
+  if (!(await isAdminAuthenticated())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id } = await context.params;
-  const body = await request.json();
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return NextResponse.json({ error: "Invalid id" }, { status: 400 });
+  const body = await readJsonObject(request);
 
   try {
     const existing = await getAppointmentById(id);
@@ -53,7 +58,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       }
       const existingMeta = parseBookingMeta(existing.notes as string | null);
       const phone = typeof body.phone === "string" ? body.phone.trim() : (existingMeta?.phone ?? "");
-      const service = body.service ?? existingMeta?.service;
+      const service = body.service === undefined ? existingMeta?.service : validateService(body.service);
       const data = await upsertAppointment({
         date,
         time_slot,
@@ -67,15 +72,15 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     return NextResponse.json(existing);
   } catch (e) {
-    return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Server error" },
-      { status: 500 }
-    );
+    const code = e instanceof Error ? e.message : "";
+    return NextResponse.json({ error: code === "ABUSIVE_NAME" || code === "INVALID_NAME" ? "الرجاء إدخال اسم صحيح." : "Invalid input" }, { status: 400 });
   }
 }
 
 export async function DELETE(_request: Request, context: RouteContext) {
+  if (!(await isAdminAuthenticated())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id } = await context.params;
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return NextResponse.json({ error: "Invalid id" }, { status: 400 });
 
   try {
     const existing = await getAppointmentById(id);
