@@ -188,11 +188,11 @@ export default function AdminCalendar({ initialAppointments }: AdminCalendarProp
     });
   }
 
-  async function handleVerifiedAdminBooking(firstName: string, lastName: string, email: string, phone: string, service: ServiceType, _accessToken: string) {
+  async function handleVerifiedAdminBooking(firstName: string, lastName: string, email: string, phone: string, service: ServiceType, accessToken: string) {
     if (!adminBookingSlot) return;
-    const res = await fetch("/api/appointments", {
+    const res = await fetch("/api/appointments/book", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
       body: JSON.stringify({
         date: adminBookingSlot.date,
         time_slot: adminBookingSlot.time_slot,
@@ -504,7 +504,6 @@ export default function AdminCalendar({ initialAppointments }: AdminCalendarProp
         appointment={adminBookingSlot}
         open={adminBookingSlot !== null}
         onClose={() => setAdminBookingSlot(null)}
-        requireEmailVerification={false}
         onBook={handleVerifiedAdminBooking}
       />
     </div>

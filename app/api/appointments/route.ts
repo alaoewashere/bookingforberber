@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import type { ServiceType } from "@/lib/types";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import {
   ensureDaySlots,
@@ -58,35 +57,16 @@ export async function POST(request: Request) {
   const date = body.date as string;
   const time_slot =
     typeof body.time_slot === "string" ? normalizeTimeSlot(body.time_slot) : "";
-  const first_name = typeof body.first_name === "string" ? body.first_name : undefined;
-  const last_name = typeof body.last_name === "string" ? body.last_name : undefined;
   const status = (body.status as string) ?? "booked";
 
   if (!isValidDateParam(date) || !time_slot) {
     return NextResponse.json({ error: "Invalid input" }, { status: 400 });
   }
-  // Public bookings must use /book and email OTP. This route is available only
-  // to the signed-in admin and still runs the same server-side name, email,
-  // phone, service, slot, and duplicate-booking validation.
-  if (status === "booked") {
-    try {
-      const appointment = await upsertAppointment({
-        date,
-        time_slot,
-        first_name,
-        last_name,
-        email: typeof body.email === "string" ? body.email : undefined,
-        phone: typeof body.phone === "string" ? body.phone : undefined,
-        service: typeof body.service === "string" ? body.service as ServiceType : undefined,
-        email_verified: false,
-        phone_verified: false,
-        status: "booked",
-      });
-      return NextResponse.json(appointment);
-    } catch (e) {
-      const code = e instanceof Error ? e.message : "";
-      return NextResponse.json({ error: code === "ABUSIVE_NAME" || code === "INVALID_NAME" || code === "MULTIPLE_WORDS" ? "الرجاء إدخال اسم صحيح." : "Invalid input" }, { status: 400 });
-    }
+  // No actor, including an administrator, may create a reservation here.
+  // The verified /book route is the sole booking path and requires matching
+  // email OTP before it creates a row.
+  if (status === "booked" || body.customer_name !== undefined || body.first_name !== undefined || body.last_name !== undefined || body.email !== undefined || body.phone !== undefined || body.service !== undefined) {
+    return NextResponse.json({ error: "Email verification is required for bookings" }, { status: 403 });
   }
   if (status !== "available" && status !== "blocked") {
     return NextResponse.json({ error: "Invalid input" }, { status: 400 });

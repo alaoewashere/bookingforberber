@@ -134,7 +134,7 @@ test("public clients never receive customer names and slot updates reject text",
   assert.match(updateRoute, /Email verification is required for booking changes/);
 });
 
-test("admin sessions are signed and staff bookings remain server-validated", () => {
+test("admin sessions are signed and all bookings require the verified booking route", () => {
   const auth = fs.readFileSync(new URL("../lib/admin-auth.ts", import.meta.url), "utf8");
   const login = fs.readFileSync(new URL("../app/api/admin/login/route.ts", import.meta.url), "utf8");
   const loginStart = fs.readFileSync(new URL("../app/api/admin/login/start/route.ts", import.meta.url), "utf8");
@@ -153,13 +153,10 @@ test("admin sessions are signed and staff bookings remain server-validated", () 
   assert.match(loginStart, /getAdminRateLimitKeys/);
   assert.match(loginStart, /ADMIN_LOGIN_MAX_ATTEMPTS = 20/);
   assert.doesNotMatch(shell, /href="\/admin"/);
-  assert.match(adminCreate, /isAdminAuthenticated/);
-  assert.match(adminCreate, /email_verified: false/);
-  assert.match(adminCreate, /phone_verified: false/);
+  assert.match(adminCreate, /Email verification is required for bookings/);
   assert.match(adminCalendar, /<BookingModal/);
-  assert.match(adminCalendar, /requireEmailVerification=\{false\}/);
-  assert.match(adminCalendar, /fetch\("\/api\/appointments"/);
-  assert.doesNotMatch(adminCalendar, /"\/api\/appointments\/book"/);
+  assert.match(adminCalendar, /"\/api\/appointments\/book"/);
+  assert.doesNotMatch(adminCalendar, /requireEmailVerification=\{false\}/);
 });
 
 test("admin dashboard sanitizes historic customer text before displaying it", () => {
