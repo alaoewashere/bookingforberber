@@ -18,11 +18,16 @@ export type CustomerT = {
     title: string;
     customerName: string;
     placeholder: string;
+    firstName: string;
+    lastName: string;
+    firstNamePlaceholder: string;
+    lastNamePlaceholder: string;
     email: string;
     emailPlaceholder: string;
     emailRequired: string;
     emailInvalid: string;
     emailSendFailed: string;
+    emailCooldown: string;
     codeSent: string;
     emailCode: string;
     emailCodePlaceholder: string;
@@ -69,11 +74,16 @@ export const arT: CustomerT = {
     title: "حجز موعد",
     customerName: "الاسم",
     placeholder: "مثال: علي",
+    firstName: "الاسم الأول",
+    lastName: "اسم العائلة",
+    firstNamePlaceholder: "مثال: محمد",
+    lastNamePlaceholder: "مثال: أحمد",
     email: "البريد الإلكتروني",
     emailPlaceholder: "example@email.com",
     emailRequired: "يرجى إدخال البريد الإلكتروني",
     emailInvalid: "يرجى إدخال بريد إلكتروني صحيح",
     emailSendFailed: "تعذر إرسال رمز التحقق إلى البريد الإلكتروني",
+    emailCooldown: "لقد استخدمت هذا البريد الإلكتروني اليوم. يمكنك استخدامه بعد يومين.",
     codeSent: "تم إرسال رمز التحقق إلى بريدك الإلكتروني.",
     emailCode: "رمز التحقق",
     emailCodePlaceholder: "أدخل رمز التحقق",
@@ -120,11 +130,16 @@ export const enT: CustomerT = {
     title: "Book Appointment",
     customerName: "Full Name",
     placeholder: "e.g. Ali",
+    firstName: "First name",
+    lastName: "Last name",
+    firstNamePlaceholder: "e.g. Omar",
+    lastNamePlaceholder: "e.g. Hussein",
     email: "Email",
     emailPlaceholder: "example@email.com",
     emailRequired: "Please enter your email",
     emailInvalid: "Please enter a valid email",
     emailSendFailed: "Could not send the verification code",
+    emailCooldown: "You have used this email today. You can use it again after 2 days.",
     codeSent: "A verification code was sent to your email.",
     emailCode: "Verification code",
     emailCodePlaceholder: "Enter the verification code",
@@ -171,11 +186,16 @@ export const trT: CustomerT = {
     title: "Randevu Al",
     customerName: "Ad Soyad",
     placeholder: "örn: Ali",
+    firstName: "Ad",
+    lastName: "Soyad",
+    firstNamePlaceholder: "örn: Mehmet",
+    lastNamePlaceholder: "örn: Yılmaz",
     email: "E-posta",
     emailPlaceholder: "example@email.com",
     emailRequired: "Lütfen e-posta adresinizi girin",
     emailInvalid: "Lütfen geçerli bir e-posta girin",
     emailSendFailed: "Doğrulama kodu gönderilemedi",
+    emailCooldown: "Bu e-postayı bugün kullandınız. 2 gün sonra tekrar kullanabilirsiniz.",
     codeSent: "Doğrulama kodu e-postanıza gönderildi.",
     emailCode: "Doğrulama kodu",
     emailCodePlaceholder: "Doğrulama kodunu girin",

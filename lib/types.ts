@@ -12,11 +12,14 @@ export interface Appointment {
   date: string;
   time_slot: string;
   customer_name: string | null;
+  first_name: string | null;
+  last_name: string | null;
   email: string | null;
   phone: string | null;
   service: ServiceType | null;
   email_verified: boolean;
   phone_verified: boolean;
+  booked_at: string | null;
   status: AppointmentStatus;
   notes: string | null;
   created_at: string;

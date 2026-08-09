@@ -1,6 +1,7 @@
 const ARABIC_MARKS = /[\u0610-\u061a\u064b-\u065f\u0670\u06d6-\u06ed]/gu;
 const INVISIBLE = /[\u00ad\u061c\u180e\u200b-\u200f\u202a-\u202e\u2060\u2061\u2062\u2063\u2064\u2066-\u206f\ufeff]/gu;
 const TATWEEL = /\u0640/gu;
+const INVISIBLE_INPUT = /[\u00ad\u061c\u180e\u200b-\u200f\u202a-\u202e\u2060-\u206f\ufeff]/u;
 
 const DIGIT_FOLDS: Record<string, string> = {
   "0": "o", "1": "i", "3": "e", "4": "a", "5": "s", "6": "g", "7": "t", "8": "b", "9": "g",
@@ -63,6 +64,19 @@ export function validateNameShape(input: unknown): string {
   if (/[^\p{L}\p{M}\p{N}\s'.’\-()]/u.test(normalized)) throw new Error("INVALID_NAME");
   if ((normalized.match(/[\p{S}\p{P}]/gu) ?? []).length > Math.max(3, Math.ceil(normalized.length * 0.25))) throw new Error("INVALID_NAME");
   if (/(.)\1{5,}/u.test(normalized)) throw new Error("INVALID_NAME");
+  return normalized;
+}
+
+/** Validate one customer name field: exactly one Unicode word made of letters. */
+export function validateNameField(input: unknown): string {
+  if (typeof input !== "string") throw new Error("INVALID_NAME");
+  if (/\s/u.test(input)) throw new Error("MULTIPLE_WORDS");
+  if (INVISIBLE_INPUT.test(input)) throw new Error("INVALID_NAME");
+
+  const normalized = normalizeCustomerName(input);
+  const length = Array.from(normalized).length;
+  if (length < 2 || length > 30) throw new Error("INVALID_NAME");
+  if (!/^[\p{L}\p{M}]+$/u.test(normalized)) throw new Error("INVALID_NAME");
   return normalized;
 }
 

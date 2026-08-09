@@ -53,6 +53,8 @@ export async function POST(request: Request) {
   const time_slot =
     typeof body.time_slot === "string" ? normalizeTimeSlot(body.time_slot) : "";
   const customer_name = (body.customer_name as string)?.trim() || "";
+  const first_name = typeof body.first_name === "string" ? body.first_name : undefined;
+  const last_name = typeof body.last_name === "string" ? body.last_name : undefined;
   const status = (body.status as string) ?? "booked";
 
   if (!isValidDateParam(date) || !time_slot) {
@@ -64,6 +66,8 @@ export async function POST(request: Request) {
       date,
       time_slot,
       customer_name,
+      first_name,
+      last_name,
       status: status as "booked" | "available" | "blocked",
     });
     return NextResponse.json(appointment);

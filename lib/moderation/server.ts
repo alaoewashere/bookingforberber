@@ -1,4 +1,4 @@
-import { compactModerationKey, normalizeCustomerName, normalizeForModeration, validateEmail, validateNameShape, validatePhone, validateService } from "@/lib/moderation/normalize";
+import { compactModerationKey, normalizeCustomerName, normalizeForModeration, validateEmail, validateNameField, validateNameShape, validatePhone, validateService } from "@/lib/moderation/normalize";
 
 // Server-only language packs. They are deliberately kept out of the client bundle.
 // This local layer catches common profanity and obfuscation even if an external
@@ -60,6 +60,17 @@ export function validateCustomerName(input: unknown): string {
   const result = moderateCustomerText(input);
   if (result.abusive) throw new Error(result.reason === "content" ? "ABUSIVE_NAME" : "INVALID_NAME");
   return result.normalized;
+}
+
+export function validateCustomerNameField(input: unknown): string {
+  let normalized: string;
+  try {
+    normalized = validateNameField(input);
+  } catch (error) {
+    throw error;
+  }
+  if (hasDangerousContext(normalized)) throw new Error("ABUSIVE_NAME");
+  return normalized;
 }
 
 export { validateEmail, validatePhone, validateService };

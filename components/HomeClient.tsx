@@ -90,7 +90,7 @@ export default function HomeClient() {
     });
   }
 
-  async function handleBook(name: string, email: string, phone: string, service: ServiceType, accessToken: string) {
+  async function handleBook(firstName: string, lastName: string, email: string, phone: string, service: ServiceType, accessToken: string) {
     if (!selectedSlot) return;
     const res = await fetch("/api/appointments/book", {
       method: "POST",
@@ -100,7 +100,7 @@ export default function HomeClient() {
       },
       body: JSON.stringify({
         date: selectedSlot.date, time_slot: selectedSlot.time_slot,
-        customer_name: name, email, phone, service,
+        first_name: firstName, last_name: lastName, email, phone, service,
       }),
     });
     const json = await res.json();

@@ -101,6 +101,8 @@ export const ar = {
     addBooking: "+ إضافة حجز",
     cancel: "إلغاء",
     customerName: "اسم العميل",
+    firstName: "الاسم الأول",
+    lastName: "اسم العائلة",
     saveBooking: "حفظ الحجز",
     date: "التاريخ",
     time: "الوقت",

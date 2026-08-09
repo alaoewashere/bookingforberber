@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import fs from "node:fs";
-import { moderateCustomerText, validateCustomerName } from "../lib/moderation/server";
-import { normalizeCustomerName, validateEmail, validateNameShape } from "../lib/moderation/normalize";
+import { moderateCustomerText, validateCustomerName, validateCustomerNameField } from "../lib/moderation/server";
+import { normalizeCustomerName, validateEmail, validateNameField, validateNameShape } from "../lib/moderation/normalize";
 import { isValidDateParam, isWithinPublicBookingRange, normalizeTimeSlot } from "../lib/slots";
 
 test("normal Arabic, Turkish, and English names remain valid", () => {
@@ -29,6 +29,22 @@ test("normalization handles obfuscation without changing legitimate display name
 test("legitimate international names remain valid", () => {
   for (const name of ["محمد", "أحمد", "علي", "مصطفى", "عبد الرحمن", "عبدالله", "Omar", "Ahmad", "Mehmet", "Mustafa", "Ali", "Jean", "John", "Иван", "Мария", "张伟", "山田太郎", "김민준", "שירה", "رضا"]) {
     assert.doesNotThrow(() => validateNameShape(name), name);
+  }
+});
+
+test("first and last names are required single Unicode words", () => {
+  for (const [first, last] of [["محمد", "أحمد"], ["Omar", "Hussein"], ["Mustafa", "Ali"], ["Mehmet", "Yilmaz"], ["Çağrı", "Şahin"]]) {
+    assert.equal(validateCustomerNameField(first), first);
+    assert.equal(validateCustomerNameField(last), last);
+  }
+  for (const value of ["محمد علي", "Omar Hussein", "multiple  spaces", "a", "a".repeat(31), "123", "!!!", "https://example.com", "<script>", "😀", "A\u200bli", "مـحمد."]) {
+    assert.throws(() => validateNameField(value), value);
+  }
+});
+
+test("both name fields receive centralized multilingual moderation", () => {
+  for (const value of ["كس", "s.i.k", "f.u.c.k", "merde", "scheisse", "mierda", "stronzo", "caralho", "блядь", "کیر", "हरामी", "傻逼", "くそ", "씨발"]) {
+    assert.throws(() => validateCustomerNameField(value), value);
   }
 });
 
@@ -73,8 +89,8 @@ test("booking path is atomic and protected against duplicate slots", () => {
   const migration = fs.readFileSync(new URL("../supabase/migrations/001_create_appointments.sql", import.meta.url), "utf8");
   const appointments = fs.readFileSync(new URL("../lib/appointments.ts", import.meta.url), "utf8");
   assert.match(migration, /constraint unique_date_time unique \(date, time_slot\)/i);
-  assert.match(appointments, /\.update\(\{ customer_name: normalizedName,[\s\S]*status: "booked"/);
-  assert.match(appointments, /\.eq\("date", date\)\.eq\("time_slot", normalizedSlot\)\.eq\("status", "available"\)/);
+  assert.match(appointments, /rpc\("book_appointment_with_email_cooldown"/);
+  assert.match(appointments, /rpc\("book_appointment_with_email_cooldown"/);
   assert.doesNotMatch(appointments, /from\("appointments"\)\s*\.insert\(/);
 });
 
@@ -92,4 +108,22 @@ test("admin appointments load beyond Supabase's default 1,000-row page", () => {
   const appointments = fs.readFileSync(new URL("../lib/appointments.ts", import.meta.url), "utf8");
   assert.match(appointments, /ADMIN_PAGE_SIZE = 1000/);
   assert.match(appointments, /\.range\(offset, offset \+ ADMIN_PAGE_SIZE - 1\)/);
+});
+
+test("public booking accepts only first_name and last_name", () => {
+  const route = fs.readFileSync(new URL("../app/api/appointments/book/route.ts", import.meta.url), "utf8");
+  assert.match(route, /PUBLIC_BOOKING_KEYS = \["date", "time_slot", "first_name", "last_name"/);
+  assert.doesNotMatch(route, /PUBLIC_BOOKING_KEYS[^\n]*customer_name/);
+  assert.match(route, /EMAIL_COOLDOWN/);
+  assert.match(route, /يمكنك استخدامه بعد يومين/);
+});
+
+test("email cooldown is atomic and based on booking time", () => {
+  const appointments = fs.readFileSync(new URL("../lib/appointments.ts", import.meta.url), "utf8");
+  const migration = fs.readFileSync(new URL("../supabase/migrations/20260809165530_atomic_email_booking_cooldown.sql", import.meta.url), "utf8");
+  assert.match(appointments, /book_appointment_with_email_cooldown/);
+  assert.match(migration, /add column if not exists booked_at timestamptz/i);
+  assert.match(migration, /pg_advisory_xact_lock/);
+  assert.match(migration, /booked_at >= now\(\) - interval '2 days'/i);
+  assert.match(migration, /grant execute on function public\.book_appointment_with_email_cooldown[\s\S]*to service_role/i);
 });

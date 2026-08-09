@@ -21,7 +21,7 @@ export default function DaySchedule({ initialAppointments, date }: DaySchedulePr
   }, []);
 
   const handleBook = useCallback(
-    async (name: string, email: string, phone: string, service: ServiceType, accessToken: string) => {
+    async (firstName: string, lastName: string, email: string, phone: string, service: ServiceType, accessToken: string) => {
       if (!selected) return;
 
       const res = await fetch("/api/appointments/book", {
@@ -33,7 +33,8 @@ export default function DaySchedule({ initialAppointments, date }: DaySchedulePr
         body: JSON.stringify({
           date,
           time_slot: selected.time_slot,
-          customer_name: name,
+          first_name: firstName,
+          last_name: lastName,
           email,
           phone,
           service,

@@ -4,14 +4,14 @@ import { useEffect, useRef, useState } from "react";
 import type { Appointment, ServiceType } from "@/lib/types";
 import { formatTimeDisplay } from "@/lib/slots";
 import { useLang } from "@/lib/lang-context";
-import { validateEmail, validateNameShape } from "@/lib/moderation";
+import { validateEmail, validateNameField } from "@/lib/moderation";
 import { sendEmailOtp, verifyEmailOtp } from "@/lib/email-otp";
 
 interface BookingModalProps {
   appointment: Appointment | null;
   open: boolean;
   onClose: () => void;
-  onBook: (name: string, email: string, phone: string, service: ServiceType, accessToken: string) => Promise<void>;
+  onBook: (firstName: string, lastName: string, email: string, phone: string, service: ServiceType, accessToken: string) => Promise<void>;
 }
 
 type Phase = "form" | "email-code" | "phone" | "saving" | "success";
@@ -31,7 +31,8 @@ export default function BookingModal({ appointment, open, onClose, onBook }: Boo
     { value: "hair_beard", label: t.services.hair_beard },
   ];
 
-  const [name,    setName]    = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName,  setLastName]  = useState("");
   const [email,   setEmail]   = useState("");
   const [emailCode, setEmailCode] = useState("");
   const [phone,   setPhone]   = useState("");
@@ -43,7 +44,7 @@ export default function BookingModal({ appointment, open, onClose, onBook }: Boo
 
   useEffect(() => {
     if (open) {
-      setName(""); setEmail(""); setEmailCode(""); setPhone(""); setService(""); setError(""); setPhase("form"); setAccessToken("");
+      setFirstName(""); setLastName(""); setEmail(""); setEmailCode(""); setPhone(""); setService(""); setError(""); setPhase("form"); setAccessToken("");
       // iOS Safari requires position:fixed to truly lock scroll
       const scrollY = window.scrollY;
       document.body.style.position = "fixed";
@@ -69,8 +70,14 @@ export default function BookingModal({ appointment, open, onClose, onBook }: Boo
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (phase === "form") {
-      let n: string;
-      try { n = validateNameShape(name); } catch { setError("الرجاء إدخال اسم صحيح."); return; }
+      try { validateNameField(firstName); } catch (error) {
+        setError(error instanceof Error && error.message === "MULTIPLE_WORDS" ? "يرجى إدخال كلمة واحدة فقط." : "يرجى إدخال اسم صحيح.");
+        return;
+      }
+      try { validateNameField(lastName); } catch (error) {
+        setError(error instanceof Error && error.message === "MULTIPLE_WORDS" ? "يرجى إدخال كلمة واحدة فقط." : "يرجى إدخال اسم صحيح.");
+        return;
+      }
       if (!email.trim()) { setError(t.booking.emailRequired); return; }
       try { validateEmail(email); } catch { setError(t.booking.emailInvalid); return; }
       if (!service) { setError(t.booking.serviceRequired); return; }
@@ -91,14 +98,16 @@ export default function BookingModal({ appointment, open, onClose, onBook }: Boo
     }
 
     if (phase !== "phone") return;
-    let n: string;
-    try { n = validateNameShape(name); } catch { setError("الرجاء إدخال اسم صحيح."); return; }
+    try { validateNameField(firstName); validateNameField(lastName); } catch (error) {
+      setError(error instanceof Error && error.message === "MULTIPLE_WORDS" ? "يرجى إدخال كلمة واحدة فقط." : "يرجى إدخال اسم صحيح.");
+      return;
+    }
     const p = phone.trim();
     if (!p) { setError(t.booking.phoneRequired); return; }
     if (!service) { setError(t.booking.serviceRequired); return; }
     setPhase("saving"); setError("");
     try {
-      await onBook(n, email.trim().toLowerCase(), p, service as ServiceType, accessToken);
+      await onBook(firstName, lastName, email.trim().toLowerCase(), p, service as ServiceType, accessToken);
       setPhase("success");
       timerRef.current = setTimeout(onClose, 3000);
     } catch (err) {
@@ -170,17 +179,28 @@ export default function BookingModal({ appointment, open, onClose, onBook }: Boo
 
           {phase === "form" && (
           <>
-          {/* Name */}
-          <div style={{ marginBottom: "1rem" }}>
-            <label htmlFor="bm-name" style={{ ...F, fontWeight: 300, fontSize: "0.7rem", color: "var(--m-muted)", letterSpacing: "0.06em", textTransform: "uppercase", display: "block", marginBottom: "0.45rem" }}>
-              {t.booking.customerName}
-            </label>
-            <input
-              id="bm-name" type="text" value={name} onChange={(e) => setName(e.target.value)}
-              autoFocus placeholder={t.booking.placeholder}
-              className="m-input" dir={t.dir}
-              style={{ fontSize: "1rem" }}
-            />
+          {/* First and last name */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "0.65rem", marginBottom: "1rem" }}>
+            <div>
+              <label htmlFor="bm-first-name" style={{ ...F, fontWeight: 300, fontSize: "0.7rem", color: "var(--m-muted)", letterSpacing: "0.06em", textTransform: "uppercase", display: "block", marginBottom: "0.45rem" }}>
+                {t.booking.firstName}
+              </label>
+              <input
+                id="bm-first-name" type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)}
+                autoFocus placeholder={t.booking.firstNamePlaceholder}
+                className="m-input" dir={t.dir} style={{ fontSize: "1rem" }}
+              />
+            </div>
+            <div>
+              <label htmlFor="bm-last-name" style={{ ...F, fontWeight: 300, fontSize: "0.7rem", color: "var(--m-muted)", letterSpacing: "0.06em", textTransform: "uppercase", display: "block", marginBottom: "0.45rem" }}>
+                {t.booking.lastName}
+              </label>
+              <input
+                id="bm-last-name" type="text" value={lastName} onChange={(e) => setLastName(e.target.value)}
+                placeholder={t.booking.lastNamePlaceholder}
+                className="m-input" dir={t.dir} style={{ fontSize: "1rem" }}
+              />
+            </div>
           </div>
 
           {/* Email */}

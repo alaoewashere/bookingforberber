@@ -63,9 +63,14 @@ export async function PATCH(request: Request, context: RouteContext) {
         date,
         time_slot,
         customer_name: name,
+        first_name: typeof body.first_name === "string" ? body.first_name : undefined,
+        last_name: typeof body.last_name === "string" ? body.last_name : undefined,
+        email: typeof existing.email === "string" ? existing.email : undefined,
+        email_verified: existing.email_verified === true,
         status: "booked",
         phone,
         service,
+        booked_at: typeof existing.booked_at === "string" ? existing.booked_at : null,
       });
       return NextResponse.json(data);
     }

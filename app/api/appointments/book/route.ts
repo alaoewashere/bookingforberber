@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { bookAppointment, toPublicAppointment } from "@/lib/appointments";
 import { isValidDateParam, isWithinPublicBookingRange, normalizeTimeSlot } from "@/lib/slots";
-import { validateCustomerName, validateEmail, validatePhone, validateService } from "@/lib/moderation/server";
+import { validateCustomerNameField, validateEmail, validatePhone, validateService } from "@/lib/moderation/server";
 import { createServerClient, getAuthenticatedEmail } from "@/lib/supabase";
 import { getBookingRateLimitKeys, hasOnlyKeys, RATE_LIMIT_MAX_ATTEMPTS, RATE_LIMIT_WINDOW_SECONDS, readJsonObject } from "@/lib/request-security";
 import { randomBytes } from "node:crypto";
 
-const PUBLIC_BOOKING_KEYS = ["date", "time_slot", "customer_name", "email", "phone", "service"] as const;
+const PUBLIC_BOOKING_KEYS = ["date", "time_slot", "first_name", "last_name", "email", "phone", "service"] as const;
 
 export async function POST(request: Request) {
   try {
@@ -17,7 +17,8 @@ export async function POST(request: Request) {
     const date = typeof body.date === "string" ? body.date : "";
     const time_slot =
       typeof body.time_slot === "string" ? normalizeTimeSlot(body.time_slot) : "";
-    const customer_name = typeof body.customer_name === "string" ? body.customer_name : "";
+    const first_name = typeof body.first_name === "string" ? body.first_name : "";
+    const last_name = typeof body.last_name === "string" ? body.last_name : "";
     const email = typeof body.email === "string" ? body.email : "";
     const phone = typeof body.phone === "string" ? body.phone : "";
 
@@ -25,9 +26,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
     }
 
+    let normalizedFirstName: string;
+    let normalizedLastName: string;
     let normalizedPhone: string;
     let normalizedEmail: string;
     let service: "hair" | "beard" | "hair_beard";
+    try {
+      normalizedFirstName = validateCustomerNameField(first_name);
+      normalizedLastName = validateCustomerNameField(last_name);
+    } catch (error) {
+      const code = error instanceof Error ? error.message : "";
+      return NextResponse.json({ error: code === "MULTIPLE_WORDS" ? "يرجى إدخال كلمة واحدة فقط." : "الرجاء إدخال اسم صحيح." }, { status: 400 });
+    }
     try {
       normalizedPhone = validatePhone(phone);
       normalizedEmail = validateEmail(email);
@@ -50,11 +60,7 @@ export async function POST(request: Request) {
       if (data !== true) return NextResponse.json({ error: "المحاولات كثيرة، حاول لاحقاً." }, { status: 429 });
     }
 
-    let normalizedName: string;
-    try { normalizedName = validateCustomerName(customer_name); }
-    catch { return NextResponse.json({ error: "الرجاء إدخال اسم صحيح." }, { status: 400 }); }
-
-    const appointment = await bookAppointment(date, time_slot, normalizedName, normalizedEmail, normalizedPhone, service, { emailVerified: true });
+    const appointment = await bookAppointment(date, time_slot, normalizedFirstName, normalizedLastName, normalizedEmail, normalizedPhone, service, { emailVerified: true });
     const response = NextResponse.json(toPublicAppointment(appointment));
     if (!request.headers.get("cookie")?.includes("booking_session=")) {
       response.cookies.set("booking_session", randomBytes(18).toString("hex"), {
@@ -68,7 +74,7 @@ export async function POST(request: Request) {
     return response;
   } catch (e) {
     const code = e instanceof Error ? e.message : "";
-    const status = code === "SLOT_UNAVAILABLE" ? 409 : code === "EMAIL_NOT_VERIFIED" ? 403 : code === "INVALID_BOOKING" || code === "REQUEST_TOO_LARGE" || code === "INVALID_JSON" ? 400 : 500;
-    return NextResponse.json({ error: status === 409 ? "هذا الموعد لم يعد متاحاً." : status === 400 ? "بيانات غير صالحة" : status === 403 ? "يجب تأكيد البريد الإلكتروني أولاً." : "Server error" }, { status });
+    const status = code === "SLOT_UNAVAILABLE" ? 409 : code === "EMAIL_COOLDOWN" ? 429 : code === "EMAIL_NOT_VERIFIED" ? 403 : code === "MULTIPLE_WORDS" ? 400 : code === "ABUSIVE_NAME" ? 400 : code === "INVALID_NAME" || code === "INVALID_BOOKING" || code === "REQUEST_TOO_LARGE" || code === "INVALID_JSON" ? 400 : 500;
+    return NextResponse.json({ error: status === 409 ? "هذا الموعد لم يعد متاحاً." : status === 429 ? "لقد استخدمت هذا البريد الإلكتروني اليوم. يمكنك استخدامه بعد يومين." : status === 400 ? (code === "MULTIPLE_WORDS" ? "يرجى إدخال كلمة واحدة فقط." : "الرجاء إدخال اسم صحيح.") : status === 403 ? "يجب تأكيد البريد الإلكتروني أولاً." : "Server error" }, { status });
   }
 }

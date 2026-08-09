@@ -41,7 +41,7 @@ export default function AdminCalendar({ initialAppointments }: AdminCalendarProp
   const [loading,      setLoading]      = useState(false);
   const [tab,          setTab]          = useState<Tab>("calendar");
   const [editingNotifId, setEditingNotifId] = useState<string | null>(null);
-  const [editNotif,      setEditNotif]      = useState<{ name: string; phone: string; service: string }>({ name: "", phone: "", service: "" });
+  const [editNotif,      setEditNotif]      = useState<{ firstName: string; lastName: string; phone: string; service: string }>({ firstName: "", lastName: "", phone: "", service: "" });
   const [seenIds,        setSeenIds]        = useState<Set<string>>(new Set());
   const [openDates,      setOpenDates]      = useState<Set<string>>(new Set());
 
@@ -180,7 +180,7 @@ export default function AdminCalendar({ initialAppointments }: AdminCalendarProp
       const res = await fetch(`/api/appointments/${row.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ customer_name: editNotif.name.trim(), phone: editNotif.phone.trim(), service: editNotif.service || undefined }),
+        body: JSON.stringify({ first_name: editNotif.firstName.trim(), last_name: editNotif.lastName.trim(), phone: editNotif.phone.trim(), service: editNotif.service || undefined }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? ar.admin.updateFailed);
@@ -208,7 +208,7 @@ export default function AdminCalendar({ initialAppointments }: AdminCalendarProp
       <input value={editName} onChange={(e) => setEditName(e.target.value)} className="m-input !py-1 max-w-[160px]" style={{ fontSize: "0.82rem" }} />
     );
     if (row.status === "available") return <span style={{ ...F, color: "var(--m-green)", fontWeight: 400 }}>—</span>;
-    if (row.status === "booked") return <span style={{ ...F, color: "var(--m-cream)", fontWeight: 500 }}>{row.customer_name ?? "—"}</span>;
+    if (row.status === "booked") return <span style={{ ...F, color: "var(--m-cream)", fontWeight: 500 }}>{row.first_name && row.last_name ? `${row.first_name} ${row.last_name}` : row.customer_name ?? "—"}</span>;
     return <span style={{ ...F, color: "var(--m-muted)" }}>مغلق</span>;
   }
 
@@ -292,9 +292,15 @@ export default function AdminCalendar({ initialAppointments }: AdminCalendarProp
                         {isEditing ? (
                           <div className="space-y-2">
                             <input
-                              type="text" value={editNotif.name}
-                              onChange={(e) => setEditNotif((p) => ({ ...p, name: e.target.value }))}
-                              placeholder={ar.admin.customerName}
+                              type="text" value={editNotif.firstName}
+                              onChange={(e) => setEditNotif((p) => ({ ...p, firstName: e.target.value }))}
+                              placeholder={ar.admin.firstName}
+                              className="m-input !py-1.5 w-full" style={{ fontSize: "0.82rem" }}
+                            />
+                            <input
+                              type="text" value={editNotif.lastName}
+                              onChange={(e) => setEditNotif((p) => ({ ...p, lastName: e.target.value }))}
+                              placeholder={ar.admin.lastName}
                               className="m-input !py-1.5 w-full" style={{ fontSize: "0.82rem" }}
                             />
                             <input
@@ -331,7 +337,7 @@ export default function AdminCalendar({ initialAppointments }: AdminCalendarProp
                               {formatTimeDisplay(a.time_slot)}
                             </span>
                             <span style={{ ...F, fontWeight: 700, color: "var(--m-cream)", flex: 1, minWidth: 0 }}>
-                              حجز من {a.customer_name ?? "—"} — {formatDateLabel(a.date)}، الساعة {formatTimeDisplay(a.time_slot)}
+                              حجز من {a.first_name && a.last_name ? `${a.first_name} ${a.last_name}` : a.customer_name ?? "—"} — {formatDateLabel(a.date)}، الساعة {formatTimeDisplay(a.time_slot)}
                             </span>
                             <span style={{ ...F, fontWeight: 300, color: "var(--m-cream-2)", fontSize: "0.82rem", flexShrink: 0 }} dir="ltr">
                               {meta?.phone || "—"}
@@ -339,7 +345,7 @@ export default function AdminCalendar({ initialAppointments }: AdminCalendarProp
                             <span className="m-pill" style={{ flexShrink: 0 }}>{serviceLabelAr(meta?.service)}</span>
                             <div className="flex gap-1 flex-shrink-0">
                               <button type="button"
-                                onClick={() => { setEditingNotifId(a.id); setEditNotif({ name: a.customer_name ?? "", phone: meta?.phone ?? "", service: meta?.service ?? "" }); }}
+                                onClick={() => { setEditingNotifId(a.id); setEditNotif({ firstName: a.first_name ?? "", lastName: a.last_name ?? "", phone: meta?.phone ?? "", service: meta?.service ?? "" }); }}
                                 className="m-btn-ghost" style={{ fontSize: "0.75rem", padding: "0.2rem 0.5rem" }}>
                                 {ar.admin.edit}
                               </button>
