@@ -23,7 +23,10 @@ export default function AdminLogin({ onSuccess }: AdminLoginProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
-      if (!res.ok) { setError(ar.admin.invalidCredentials); return; }
+      if (!res.ok) {
+        setError(res.status === 429 ? ar.admin.tooManyAttempts : ar.admin.invalidCredentials);
+        return;
+      }
       setPhase("code");
     } catch { setError(ar.admin.loginFailed); }
     finally { setLoading(false); }

@@ -2,7 +2,12 @@ import { NextResponse } from "next/server";
 import { isAllowedAdminEmail, verifyAdminPassword } from "@/lib/admin-auth";
 import { sendEmailOtp } from "@/lib/email-otp";
 import { createServerClient } from "@/lib/supabase";
-import { getAdminRateLimitKeys, hasOnlyKeys, RATE_LIMIT_MAX_ATTEMPTS, RATE_LIMIT_WINDOW_SECONDS, readJsonObject } from "@/lib/request-security";
+import { getAdminRateLimitKeys, hasOnlyKeys, RATE_LIMIT_WINDOW_SECONDS, readJsonObject } from "@/lib/request-security";
+
+// A strong password plus an email OTP are both required. This limit still
+// blocks automated guessing, while allowing a real administrator to recover
+// from a handful of typing mistakes without a one-hour lockout.
+const ADMIN_LOGIN_MAX_ATTEMPTS = 20;
 
 export async function POST(request: Request) {
   const body = await readJsonObject(request);
@@ -16,7 +21,7 @@ export async function POST(request: Request) {
       const { data, error } = await supabase.rpc("consume_booking_rate_limit", {
         p_key: key,
         p_window_seconds: RATE_LIMIT_WINDOW_SECONDS,
-        p_max_attempts: RATE_LIMIT_MAX_ATTEMPTS,
+        p_max_attempts: ADMIN_LOGIN_MAX_ATTEMPTS,
       });
       if (error) throw error;
       if (data !== true) return NextResponse.json({ error: "Too many attempts" }, { status: 429 });

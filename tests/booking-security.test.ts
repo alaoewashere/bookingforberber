@@ -133,6 +133,7 @@ test("admin sessions are signed and admin-created bookings require the verified 
   assert.match(login, /isAllowedAdminEmail/);
   assert.match(loginStart, /sendEmailOtp/);
   assert.match(loginStart, /getAdminRateLimitKeys/);
+  assert.match(loginStart, /ADMIN_LOGIN_MAX_ATTEMPTS = 20/);
   assert.doesNotMatch(shell, /href="\/admin"/);
   assert.match(adminCreate, /Email verification is required for bookings/);
   assert.match(adminCalendar, /<BookingModal/);

@@ -96,6 +96,7 @@ export const ar = {
     checking: "جاري التحقق…",
     invalidPassword: "كلمة المرور غير صحيحة",
     invalidCredentials: "بيانات الدخول غير صحيحة",
+    tooManyAttempts: "تمت محاولات كثيرة. حاول مرة أخرى بعد قليل.",
     codeInvalid: "رمز التحقق غير صحيح أو منتهي الصلاحية",
     loginFailed: "فشل تسجيل الدخول",
     allAppointments: "كل المواعيد",
