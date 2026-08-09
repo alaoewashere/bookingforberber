@@ -104,7 +104,20 @@ export default function HomeClient() {
       }),
     });
     const json = await res.json();
-    if (!res.ok) throw new Error(json.error ?? t.booking.saveFailed);
+    if (!res.ok) {
+      const serverError = typeof json.error === "string" ? json.error : "";
+      const localizedError =
+        serverError === "يرجى إدخال كلمة واحدة فقط."
+          ? t.booking.nameOneWord
+          : serverError === "الرجاء إدخال اسم صحيح." || serverError === "يرجى إدخال اسم صحيح."
+            ? t.booking.nameInvalid
+            : serverError === "لقد استخدمت هذا البريد الإلكتروني اليوم. يمكنك استخدامه بعد يومين."
+              ? t.booking.emailCooldown
+              : serverError === "هذا الموعد لم يعد متاحاً."
+                ? t.booking.alreadyBooked
+                : serverError || t.booking.saveFailed;
+      throw new Error(localizedError);
+    }
     const saved = json as Appointment;
     setSlots((prev) =>
       prev.map((s) => s.date === saved.date && s.time_slot === saved.time_slot ? saved : s)

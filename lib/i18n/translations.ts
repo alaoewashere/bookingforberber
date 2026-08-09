@@ -42,6 +42,8 @@ export type CustomerT = {
     save: string;
     saving: string;
     nameRequired: string;
+    nameOneWord: string;
+    nameInvalid: string;
     phoneRequired: string;
     serviceRequired: string;
     saveFailed: string;
@@ -98,6 +100,8 @@ export const arT: CustomerT = {
     save: "تأكيد الحجز",
     saving: "جاري الحفظ…",
     nameRequired: "يرجى إدخال الاسم",
+    nameOneWord: "يرجى إدخال كلمة واحدة فقط.",
+    nameInvalid: "الرجاء إدخال اسم صحيح.",
     phoneRequired: "يرجى إدخال رقم الهاتف",
     serviceRequired: "يرجى اختيار نوع الخدمة",
     saveFailed: "فشل الحفظ",
@@ -154,6 +158,8 @@ export const enT: CustomerT = {
     save: "Confirm",
     saving: "Saving…",
     nameRequired: "Please enter your name",
+    nameOneWord: "Please enter one word only.",
+    nameInvalid: "Please enter a valid name.",
     phoneRequired: "Please enter your phone number",
     serviceRequired: "Please select a service",
     saveFailed: "Booking failed",
@@ -210,6 +216,8 @@ export const trT: CustomerT = {
     save: "Onayla",
     saving: "Kaydediliyor…",
     nameRequired: "Lütfen adınızı girin",
+    nameOneWord: "Lütfen sadece bir kelime girin.",
+    nameInvalid: "Lütfen geçerli bir ad girin.",
     phoneRequired: "Lütfen telefon numaranızı girin",
     serviceRequired: "Lütfen hizmet türü seçin",
     saveFailed: "Kayıt başarısız",

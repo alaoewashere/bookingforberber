@@ -22,6 +22,10 @@ const SERVICE_ICONS: Record<ServiceType, string> = {
   hair_beard: "✂+",
 };
 
+function isMultipleWordsError(error: unknown): boolean {
+  return error instanceof Error && error.message === "MULTIPLE_WORDS";
+}
+
 export default function BookingModal({ appointment, open, onClose, onBook }: BookingModalProps) {
   const { t, lang } = useLang();
 
@@ -41,6 +45,10 @@ export default function BookingModal({ appointment, open, onClose, onBook }: Boo
   const [phase,   setPhase]   = useState<Phase>("form");
   const [accessToken, setAccessToken] = useState("");
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function nameErrorMessage(error: unknown): string {
+    return isMultipleWordsError(error) ? t.booking.nameOneWord : t.booking.nameInvalid;
+  }
 
   useEffect(() => {
     if (open) {
@@ -71,11 +79,11 @@ export default function BookingModal({ appointment, open, onClose, onBook }: Boo
     e.preventDefault();
     if (phase === "form") {
       try { validateNameField(firstName); } catch (error) {
-        setError(error instanceof Error && error.message === "MULTIPLE_WORDS" ? "يرجى إدخال كلمة واحدة فقط." : "يرجى إدخال اسم صحيح.");
+        setError(nameErrorMessage(error));
         return;
       }
       try { validateNameField(lastName); } catch (error) {
-        setError(error instanceof Error && error.message === "MULTIPLE_WORDS" ? "يرجى إدخال كلمة واحدة فقط." : "يرجى إدخال اسم صحيح.");
+        setError(nameErrorMessage(error));
         return;
       }
       if (!email.trim()) { setError(t.booking.emailRequired); return; }
@@ -99,7 +107,7 @@ export default function BookingModal({ appointment, open, onClose, onBook }: Boo
 
     if (phase !== "phone") return;
     try { validateNameField(firstName); validateNameField(lastName); } catch (error) {
-      setError(error instanceof Error && error.message === "MULTIPLE_WORDS" ? "يرجى إدخال كلمة واحدة فقط." : "يرجى إدخال اسم صحيح.");
+      setError(nameErrorMessage(error));
       return;
     }
     const p = phone.trim();
