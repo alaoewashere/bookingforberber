@@ -71,7 +71,7 @@ export default function HomeClient() {
   const fetchSlots = useCallback((date: string) => {
     if (!date) return;
     setLoading(true);
-    fetch(`/api/appointments?date=${date}`)
+    fetch(`/api/appointments?date=${date}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((d) => setSlots(Array.isArray(d)
         ? d.filter((s) => { const h = parseInt(s.time_slot, 10); return h >= 12 && h <= 22; })

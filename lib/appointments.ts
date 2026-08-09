@@ -107,17 +107,11 @@ export async function ensureDaySlots(date: string): Promise<Appointment[]> {
     notes: null,
   }));
 
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from("appointments")
-    .upsert(slots, { onConflict: UPSERT_CONFLICT, ignoreDuplicates: true })
-    .select("*");
+    .upsert(slots, { onConflict: UPSERT_CONFLICT, ignoreDuplicates: true });
 
   if (error) throw error;
-
-  const created = (data ?? []) as Appointment[];
-  if (created.length > 0) {
-    return created.sort((a, b) => a.time_slot.localeCompare(b.time_slot));
-  }
 
   return getAppointmentsByDate(date);
 }

@@ -9,6 +9,8 @@ import {
 import { isValidDateParam, isWithinPublicBookingRange, normalizeTimeSlot } from "@/lib/slots";
 import { readJsonObject } from "@/lib/request-security";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const date = searchParams.get("date");
@@ -19,7 +21,9 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: "Invalid date" }, { status: 400 });
       }
       const appointments = await ensureDaySlots(date);
-      return NextResponse.json(appointments);
+      return NextResponse.json(appointments, {
+        headers: { "Cache-Control": "no-store, max-age=0" },
+      });
     }
 
     const all = searchParams.get("all") === "1";
@@ -29,7 +33,9 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
       }
       const appointments = await getAllAppointments();
-      return NextResponse.json(appointments);
+      return NextResponse.json(appointments, {
+        headers: { "Cache-Control": "no-store, max-age=0" },
+      });
     }
 
     return NextResponse.json({ error: "Missing query" }, { status: 400 });
