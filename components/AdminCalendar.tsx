@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { Appointment, AppointmentStatus } from "@/lib/types";
+import type { Appointment, AppointmentStatus, ServiceType } from "@/lib/types";
 import { parseBookingMeta } from "@/lib/types";
+import BookingModal from "@/components/BookingModal";
 import {
   AR_WEEKDAYS_SHORT,
   buildMonthGrid,
@@ -37,7 +38,7 @@ export default function AdminCalendar({ initialAppointments }: AdminCalendarProp
   const [showAdd,      setShowAdd]      = useState(false);
   const [addDate,      setAddDate]      = useState("");
   const [addTime,      setAddTime]      = useState("12:00");
-  const [addName,      setAddName]      = useState("");
+  const [adminBookingSlot, setAdminBookingSlot] = useState<Appointment | null>(null);
   const [loading,      setLoading]      = useState(false);
   const [tab,          setTab]          = useState<Tab>("calendar");
   const [editingNotifId, setEditingNotifId] = useState<string | null>(null);
@@ -160,18 +161,49 @@ export default function AdminCalendar({ initialAppointments }: AdminCalendarProp
     finally { setLoading(false); }
   }
 
-  async function handleAddBooking(e: React.FormEvent) {
+  function handleAddBooking(e: React.FormEvent) {
     e.preventDefault();
-    if (!addDate || !addName.trim()) return;
-    setLoading(true);
-    try {
-      const res = await fetch("/api/appointments", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ date: addDate, time_slot: addTime, customer_name: addName.trim(), status: "booked" }) });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? ar.admin.addFailed);
-      refreshRow(json as Appointment); setShowAdd(false); setAddName("");
-      setSelectedDate(addDate);
-      const p = parseDateKey(addDate); setViewYear(p.year); setViewMonth(p.month);
-    } finally { setLoading(false); }
+    if (!addDate) return;
+    setAdminBookingSlot({
+      id: `admin-new-${addDate}-${addTime}`,
+      date: addDate,
+      time_slot: addTime,
+      customer_name: null,
+      first_name: null,
+      last_name: null,
+      email: null,
+      phone: null,
+      service: null,
+      email_verified: false,
+      phone_verified: false,
+      booked_at: null,
+      status: "available",
+      notes: null,
+      created_at: new Date().toISOString(),
+    });
+  }
+
+  async function handleVerifiedAdminBooking(firstName: string, lastName: string, email: string, phone: string, service: ServiceType, accessToken: string) {
+    if (!adminBookingSlot) return;
+    const res = await fetch("/api/appointments/book", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}) },
+      body: JSON.stringify({
+        date: adminBookingSlot.date,
+        time_slot: adminBookingSlot.time_slot,
+        first_name: firstName,
+        last_name: lastName,
+        email,
+        phone,
+        service,
+      }),
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error ?? ar.admin.addFailed);
+    refreshRow(json as Appointment);
+    setShowAdd(false);
+    setSelectedDate(adminBookingSlot.date);
+    const p = parseDateKey(adminBookingSlot.date); setViewYear(p.year); setViewMonth(p.month);
   }
 
   async function handleSaveNotifEdit(row: Appointment) {
@@ -383,8 +415,7 @@ export default function AdminCalendar({ initialAppointments }: AdminCalendarProp
               <select value={addTime} onChange={(e) => setAddTime(e.target.value)} dir="ltr" className="m-input !py-2">
                 {timeOptions.map((t) => <option key={t} value={t}>{formatTimeDisplay(t)}</option>)}
               </select>
-              <input type="text" value={addName} onChange={(e) => setAddName(e.target.value)} placeholder={ar.admin.customerName} required className="m-input !py-2 sm:col-span-2" />
-              <button type="submit" disabled={loading} className="m-btn-primary sm:col-span-2 lg:col-span-4">{ar.admin.saveBooking}</button>
+              <button type="submit" disabled={loading} className="m-btn-primary sm:col-span-2 lg:col-span-4">متابعة وتحقق البريد الإلكتروني</button>
             </form>
           )}
 
@@ -464,6 +495,12 @@ export default function AdminCalendar({ initialAppointments }: AdminCalendarProp
           )}
         </div>
       )}
+      <BookingModal
+        appointment={adminBookingSlot}
+        open={adminBookingSlot !== null}
+        onClose={() => setAdminBookingSlot(null)}
+        onBook={handleVerifiedAdminBooking}
+      />
     </div>
   );
 }

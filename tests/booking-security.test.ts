@@ -118,6 +118,29 @@ test("public booking accepts only first_name and last_name", () => {
   assert.match(route, /يمكنك استخدامه بعد يومين/);
 });
 
+test("admin sessions are signed and admin-created bookings require the verified booking route", () => {
+  const auth = fs.readFileSync(new URL("../lib/admin-auth.ts", import.meta.url), "utf8");
+  const login = fs.readFileSync(new URL("../app/api/admin/login/route.ts", import.meta.url), "utf8");
+  const adminCreate = fs.readFileSync(new URL("../app/api/appointments/route.ts", import.meta.url), "utf8");
+  const adminCalendar = fs.readFileSync(new URL("../components/AdminCalendar.tsx", import.meta.url), "utf8");
+  assert.match(auth, /createHmac\("sha256"/);
+  assert.match(auth, /timingSafeEqual/);
+  assert.doesNotMatch(auth, /value === "authenticated"/);
+  assert.match(login, /sameSite: "strict"/);
+  assert.match(login, /getAdminRateLimitKeys/);
+  assert.match(adminCreate, /Email verification is required for bookings/);
+  assert.match(adminCalendar, /<BookingModal/);
+  assert.match(adminCalendar, /"\/api\/appointments\/book"/);
+  assert.doesNotMatch(adminCalendar, /fetch\("\/api\/appointments", \{ method: "POST"/);
+});
+
+test("admin dashboard sanitizes historic customer text before displaying it", () => {
+  const appointments = fs.readFileSync(new URL("../lib/appointments.ts", import.meta.url), "utf8");
+  assert.match(appointments, /Never render unsafe historic/);
+  assert.match(appointments, /validateCustomerNameField\(appointment\.first_name\)/);
+  assert.match(appointments, /validateCustomerName\(appointment\.customer_name\)/);
+});
+
 test("email cooldown is atomic and based on booking time", () => {
   const appointments = fs.readFileSync(new URL("../lib/appointments.ts", import.meta.url), "utf8");
   const migration = fs.readFileSync(new URL("../supabase/migrations/20260809165530_atomic_email_booking_cooldown.sql", import.meta.url), "utf8");

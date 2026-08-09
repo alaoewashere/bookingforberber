@@ -46,6 +46,9 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
 
     if (body.status === "booked" || body.customer_name !== undefined) {
+      if (existing.status !== "booked") {
+        return NextResponse.json({ error: "Email verification is required for new bookings" }, { status: 403 });
+      }
       const name =
         typeof body.customer_name === "string"
           ? body.customer_name.trim()

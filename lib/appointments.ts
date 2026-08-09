@@ -69,7 +69,26 @@ export async function getAllAppointments(): Promise<Appointment[]> {
     if (page.length < ADMIN_PAGE_SIZE) break;
   }
 
-  return appointments;
+  // Older rows can predate the moderation layer. Never render unsafe historic
+  // customer-controlled text in the administrator dashboard.
+  return appointments.map((appointment) => {
+    let first_name: string | null = null;
+    let last_name: string | null = null;
+    let customer_name: string | null = null;
+    try {
+      if (appointment.first_name) first_name = validateCustomerNameField(appointment.first_name);
+      if (appointment.last_name) last_name = validateCustomerNameField(appointment.last_name);
+    } catch {
+      first_name = null;
+      last_name = null;
+    }
+    try {
+      if (appointment.customer_name) customer_name = validateCustomerName(appointment.customer_name);
+    } catch {
+      customer_name = null;
+    }
+    return { ...appointment, first_name, last_name, customer_name };
+  });
 }
 
 export async function getAppointmentsByCustomer(

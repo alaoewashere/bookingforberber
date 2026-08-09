@@ -66,14 +66,21 @@ export async function POST(request: Request) {
   if (!isValidDateParam(date) || !time_slot) {
     return NextResponse.json({ error: "Invalid input" }, { status: 400 });
   }
+  // A booking may only be created by the email-verified /book endpoint.
+  // This prevents an authenticated admin browser from bypassing the same
+  // moderation, OTP, cooldown, and race-condition protection used publicly.
+  if (status === "booked" || customer_name || first_name || last_name) {
+    return NextResponse.json({ error: "Email verification is required for bookings" }, { status: 403 });
+  }
+  if (status !== "available" && status !== "blocked") {
+    return NextResponse.json({ error: "Invalid input" }, { status: 400 });
+  }
 
   try {
     const appointment = await upsertAppointment({
       date,
       time_slot,
-      customer_name,
-      first_name,
-      last_name,
+      customer_name: "",
       status: status as "booked" | "available" | "blocked",
     });
     return NextResponse.json(appointment);

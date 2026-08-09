@@ -34,5 +34,14 @@ export function getBookingRateLimitKeys(request: Request, phone?: string): strin
   return Array.from(new Set(keys.map(digest)));
 }
 
+/** Keep administrator password attempts separate from customer booking limits. */
+export function getAdminRateLimitKeys(request: Request): string[] {
+  const forwarded = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+  const realIp = request.headers.get("x-real-ip")?.trim();
+  const ip = forwarded || realIp || "unknown";
+  const userAgent = request.headers.get("user-agent")?.slice(0, 256) ?? "unknown";
+  return Array.from(new Set([`admin-ip:${ip}`, `admin-fingerprint:${ip}:${userAgent}`].map(digest)));
+}
+
 export const RATE_LIMIT_WINDOW_SECONDS = 3600;
 export const RATE_LIMIT_MAX_ATTEMPTS = 8;
