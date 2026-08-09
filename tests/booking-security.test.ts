@@ -192,3 +192,13 @@ test("staff-created bookings cannot overwrite an occupied slot", () => {
   assert.match(appointments, /\.eq\("status", "available"\)/);
   assert.match(appointments, /throw new Error\("SLOT_UNAVAILABLE"\)/);
 });
+
+test("releasing or deleting a booked slot archives its private booking snapshot", () => {
+  const migration = fs.readFileSync(new URL("../supabase/migrations/20260809192533_archive_released_bookings.sql", import.meta.url), "utf8");
+  assert.match(migration, /create table if not exists public\.appointment_archives/i);
+  assert.match(migration, /appointment_snapshot jsonb not null/i);
+  assert.match(migration, /enable row level security/i);
+  assert.match(migration, /before update of status on public\.appointments/i);
+  assert.match(migration, /before delete on public\.appointments/i);
+  assert.match(migration, /revoke all on public\.appointment_archives from anon, authenticated/i);
+});
