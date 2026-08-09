@@ -53,7 +53,8 @@ export default function HomeClient() {
   const [weekMonday,   setWeekMonday]   = useState<Date>(() => getWeekMonday(new Date()));
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [slots,        setSlots]        = useState<Appointment[]>([]);
-  const [loading,      setLoading]      = useState(false);
+  // Keep the empty-state message from flashing before the first date request.
+  const [loading,      setLoading]      = useState(true);
   const [modalOpen,    setModalOpen]    = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<Appointment | null>(null);
 
@@ -208,7 +209,7 @@ export default function HomeClient() {
             {t.home.loading}
           </p>
         </div>
-      ) : slots.length === 0 ? (
+      ) : !selectedDate ? null : slots.length === 0 ? (
         <div className="m-empty">
           <p style={{ ...F, fontWeight: 300, color: "var(--m-muted)" }}>{t.home.noSlots}</p>
         </div>
