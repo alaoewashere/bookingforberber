@@ -18,7 +18,6 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
           </Link>
           <nav className="flex shrink-0 items-center gap-1">
             <Link href="/" className="m-nav-link">{t.nav.home}</Link>
-            <Link href="/admin" className="m-nav-link">{t.nav.admin}</Link>
             <button
               type="button"
               onClick={() => setLang(lang === "ar" ? "tr" : lang === "tr" ? "en" : "ar")}

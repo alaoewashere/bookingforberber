@@ -121,13 +121,19 @@ test("public booking accepts only first_name and last_name", () => {
 test("admin sessions are signed and admin-created bookings require the verified booking route", () => {
   const auth = fs.readFileSync(new URL("../lib/admin-auth.ts", import.meta.url), "utf8");
   const login = fs.readFileSync(new URL("../app/api/admin/login/route.ts", import.meta.url), "utf8");
+  const loginStart = fs.readFileSync(new URL("../app/api/admin/login/start/route.ts", import.meta.url), "utf8");
   const adminCreate = fs.readFileSync(new URL("../app/api/appointments/route.ts", import.meta.url), "utf8");
   const adminCalendar = fs.readFileSync(new URL("../components/AdminCalendar.tsx", import.meta.url), "utf8");
+  const shell = fs.readFileSync(new URL("../components/SiteShell.tsx", import.meta.url), "utf8");
   assert.match(auth, /createHmac\("sha256"/);
   assert.match(auth, /timingSafeEqual/);
   assert.doesNotMatch(auth, /value === "authenticated"/);
   assert.match(login, /sameSite: "strict"/);
-  assert.match(login, /getAdminRateLimitKeys/);
+  assert.match(login, /getAuthenticatedEmail/);
+  assert.match(login, /isAllowedAdminEmail/);
+  assert.match(loginStart, /sendEmailOtp/);
+  assert.match(loginStart, /getAdminRateLimitKeys/);
+  assert.doesNotMatch(shell, /href="\/admin"/);
   assert.match(adminCreate, /Email verification is required for bookings/);
   assert.match(adminCalendar, /<BookingModal/);
   assert.match(adminCalendar, /"\/api\/appointments\/book"/);

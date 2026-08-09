@@ -1,10 +1,22 @@
 import { cookies } from "next/headers";
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { validateEmail } from "@/lib/moderation/server";
 
 export const ADMIN_COOKIE = "barber_admin_session";
 
 export function getAdminPassword(): string {
   return process.env.ADMIN_PASSWORD ?? "";
+}
+
+export function isAllowedAdminEmail(email: string): boolean {
+  try {
+    const expected = validateEmail(process.env.ADMIN_EMAIL ?? "");
+    const provided = validateEmail(email);
+    if (provided.length !== expected.length) return false;
+    return timingSafeEqual(Buffer.from(provided), Buffer.from(expected));
+  } catch {
+    return false;
+  }
 }
 
 export function verifyAdminPassword(password: string): boolean {

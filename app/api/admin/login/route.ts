@@ -2,32 +2,23 @@ import { NextResponse } from "next/server";
 import {
   ADMIN_COOKIE,
   createAdminSession,
+  isAllowedAdminEmail,
   verifyAdminPassword,
 } from "@/lib/admin-auth";
-import { createServerClient } from "@/lib/supabase";
-import { getAdminRateLimitKeys, RATE_LIMIT_MAX_ATTEMPTS, RATE_LIMIT_WINDOW_SECONDS, readJsonObject } from "@/lib/request-security";
+import { getAuthenticatedEmail } from "@/lib/supabase";
+import { hasOnlyKeys, readJsonObject } from "@/lib/request-security";
 
 export async function POST(request: Request) {
   const body = await readJsonObject(request);
   const password = typeof body.password === "string" ? body.password : "";
-
-  try {
-    const supabase = createServerClient();
-    for (const key of getAdminRateLimitKeys(request)) {
-      const { data, error } = await supabase.rpc("consume_booking_rate_limit", {
-        p_key: key,
-        p_window_seconds: RATE_LIMIT_WINDOW_SECONDS,
-        p_max_attempts: RATE_LIMIT_MAX_ATTEMPTS,
-      });
-      if (error) throw error;
-      if (data !== true) return NextResponse.json({ error: "Too many attempts" }, { status: 429 });
-    }
-  } catch {
-    return NextResponse.json({ error: "Unable to sign in" }, { status: 503 });
-  }
-
-  if (!verifyAdminPassword(password)) {
+  const email = typeof body.email === "string" ? body.email : "";
+  const accessToken = typeof body.access_token === "string" ? body.access_token : "";
+  if (!hasOnlyKeys(body, ["password", "email", "access_token"]) || !verifyAdminPassword(password) || !isAllowedAdminEmail(email)) {
     return NextResponse.json({ error: "Invalid password" }, { status: 401 });
+  }
+  const authenticatedEmail = accessToken ? await getAuthenticatedEmail(accessToken) : null;
+  if (!authenticatedEmail || !isAllowedAdminEmail(authenticatedEmail) || authenticatedEmail !== email.trim().toLowerCase()) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const response = NextResponse.json({ ok: true });
