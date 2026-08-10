@@ -68,6 +68,12 @@ export default function HomeClient() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [weekMonday]);
 
+  // Establish a random, HttpOnly, first-party anti-abuse identifier. Its value
+  // is never available to the browser and contains no customer information.
+  useEffect(() => {
+    void fetch("/api/booking-device", { cache: "no-store", credentials: "same-origin" });
+  }, []);
+
   const fetchSlots = useCallback((date: string) => {
     if (!date) return;
     setLoading(true);

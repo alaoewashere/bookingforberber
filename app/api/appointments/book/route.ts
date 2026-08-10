@@ -3,18 +3,25 @@ import { toPublicAppointment, upsertAppointment } from "@/lib/appointments";
 import { isValidDateParam, isWithinPublicBookingRange, normalizeTimeSlot } from "@/lib/slots";
 import { validateCustomerNamePair, validatePhone, validateService } from "@/lib/moderation/server";
 import { createServerClient } from "@/lib/supabase";
-import { getBookingRateLimitKeys, getPhoneDailyRateLimitKey, getRequestIp, hasOnlyKeys, RATE_LIMIT_MAX_ATTEMPTS, RATE_LIMIT_WINDOW_SECONDS, readJsonObject } from "@/lib/request-security";
-import { randomBytes } from "node:crypto";
+import { getBookingRateLimitKeys, getRequestIp, hasOnlyKeys, RATE_LIMIT_MAX_ATTEMPTS, RATE_LIMIT_WINDOW_SECONDS, readJsonObject } from "@/lib/request-security";
+import { getOrCreateBookingDevice, setBookingDeviceCookie } from "@/lib/booking-device";
+import { isAdminAuthenticated } from "@/lib/admin-auth";
 
 const PUBLIC_BOOKING_KEYS = ["date", "time_slot", "first_name", "last_name", "phone", "service"] as const;
-const PHONE_DAILY_WINDOW_SECONDS = 60 * 60 * 24;
-const PHONE_DAILY_MAX_BOOKINGS = 1;
 
 export async function POST(request: Request) {
+  const adminBooking = request.headers.get("x-admin-booking") === "1" && await isAdminAuthenticated();
+  const device = adminBooking ? null : getOrCreateBookingDevice(request);
+  const respond = (body: unknown, init: ResponseInit) => {
+    const response = NextResponse.json(body, init);
+    if (device) setBookingDeviceCookie(response, device);
+    return response;
+  };
+
   try {
     const body = await readJsonObject(request);
     if (!hasOnlyKeys(body, PUBLIC_BOOKING_KEYS)) {
-      return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
+      return respond({ error: "بيانات غير صالحة" }, { status: 400 });
     }
     const date = typeof body.date === "string" ? body.date : "";
     const time_slot =
@@ -23,8 +30,17 @@ export async function POST(request: Request) {
     const last_name = typeof body.last_name === "string" ? body.last_name : "";
     const phone = typeof body.phone === "string" ? body.phone : "";
 
+    const supabase = createServerClient();
+    if (!adminBooking) {
+      for (const key of getBookingRateLimitKeys(request, device?.id)) {
+        const { data, error } = await supabase.rpc("consume_booking_rate_limit", { p_key: key, p_window_seconds: RATE_LIMIT_WINDOW_SECONDS, p_max_attempts: RATE_LIMIT_MAX_ATTEMPTS });
+        if (error) throw error;
+        if (data !== true) return respond({ error: "تم تجاوز عدد المحاولات المسموح بها. يرجى المحاولة لاحقًا." }, { status: 429 });
+      }
+    }
+
     if (!isValidDateParam(date) || !isWithinPublicBookingRange(date) || !time_slot) {
-      return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
+      return respond({ error: "بيانات غير صالحة" }, { status: 400 });
     }
 
     let normalizedFirstName: string;
@@ -37,29 +53,13 @@ export async function POST(request: Request) {
       normalizedLastName = nameParts.lastName;
     } catch (error) {
       const code = error instanceof Error ? error.message : "";
-      return NextResponse.json({ error: code === "MULTIPLE_WORDS" ? "يرجى إدخال كلمة واحدة فقط." : "الرجاء إدخال اسم صحيح." }, { status: 400 });
+      return respond({ error: code === "MULTIPLE_WORDS" ? "يرجى إدخال كلمة واحدة فقط." : "الرجاء إدخال اسم صحيح." }, { status: 400 });
     }
     try {
       normalizedPhone = validatePhone(phone);
       service = validateService(body.service);
     } catch {
-      return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
-    }
-
-    const supabase = createServerClient();
-    for (const key of getBookingRateLimitKeys(request)) {
-      const { data, error } = await supabase.rpc("consume_booking_rate_limit", { p_key: key, p_window_seconds: RATE_LIMIT_WINDOW_SECONDS, p_max_attempts: RATE_LIMIT_MAX_ATTEMPTS });
-      if (error) throw error;
-      if (data !== true) return NextResponse.json({ error: "المحاولات كثيرة، حاول لاحقاً." }, { status: 429 });
-    }
-    const phoneLimit = await supabase.rpc("consume_booking_rate_limit", {
-      p_key: getPhoneDailyRateLimitKey(normalizedPhone),
-      p_window_seconds: PHONE_DAILY_WINDOW_SECONDS,
-      p_max_attempts: PHONE_DAILY_MAX_BOOKINGS,
-    });
-    if (phoneLimit.error) throw phoneLimit.error;
-    if (phoneLimit.data !== true) {
-      return NextResponse.json({ error: "يمكن حجز موعد واحد فقط لكل رقم هاتف خلال 24 ساعة." }, { status: 429 });
+      return respond({ error: "بيانات غير صالحة" }, { status: 400 });
     }
 
     const appointment = await upsertAppointment({
@@ -68,26 +68,19 @@ export async function POST(request: Request) {
       first_name: normalizedFirstName,
       last_name: normalizedLastName,
       phone: normalizedPhone,
+      normalized_phone: normalizedPhone,
       service,
       booking_ip: getRequestIp(request),
+      device_id: device?.id ?? null,
+      booking_source: adminBooking ? "admin" : "public",
       email_verified: false,
       phone_verified: false,
       status: "booked",
     });
-    const response = NextResponse.json(toPublicAppointment(appointment));
-    if (!request.headers.get("cookie")?.includes("booking_session=")) {
-      response.cookies.set("booking_session", randomBytes(18).toString("hex"), {
-        httpOnly: true,
-        sameSite: "lax",
-        secure: process.env.NODE_ENV === "production",
-        maxAge: 60 * 60 * 24 * 30,
-        path: "/",
-      });
-    }
-    return response;
+    return respond(toPublicAppointment(appointment), { status: 200 });
   } catch (e) {
     const code = e instanceof Error ? e.message : "";
-    const status = code === "SLOT_UNAVAILABLE" ? 409 : code === "MULTIPLE_WORDS" ? 400 : code === "ABUSIVE_NAME" ? 400 : code === "INVALID_NAME" || code === "INVALID_BOOKING" || code === "REQUEST_TOO_LARGE" || code === "INVALID_JSON" ? 400 : 500;
-    return NextResponse.json({ error: status === 409 ? "هذا الموعد لم يعد متاحاً." : status === 400 ? (code === "MULTIPLE_WORDS" ? "يرجى إدخال كلمة واحدة فقط." : "الرجاء إدخال اسم صحيح.") : "Server error" }, { status });
+    const status = code === "SLOT_UNAVAILABLE" ? 409 : code === "DAILY_BOOKING_LIMIT" ? 429 : code === "MULTIPLE_WORDS" ? 400 : code === "ABUSIVE_NAME" ? 400 : code === "INVALID_NAME" || code === "INVALID_BOOKING" || code === "REQUEST_TOO_LARGE" || code === "INVALID_JSON" ? 400 : 500;
+    return respond({ error: status === 409 ? "هذا الموعد لم يعد متاحاً." : status === 429 ? "يمكنك حجز موعد واحد فقط في اليوم." : status === 400 ? (code === "MULTIPLE_WORDS" ? "يرجى إدخال كلمة واحدة فقط." : "الرجاء إدخال اسم صحيح.") : "Server error" }, { status });
   }
 }

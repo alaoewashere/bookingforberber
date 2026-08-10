@@ -82,9 +82,23 @@ export function validateNameField(input: unknown): string {
 
 export function validatePhone(input: unknown): string {
   if (typeof input !== "string") throw new Error("INVALID_PHONE");
-  const normalized = input.normalize("NFKC").replace(/[\s().-]/gu, "");
-  if (!/^\+?[0-9]{8,15}$/u.test(normalized)) throw new Error("INVALID_PHONE");
-  return normalized;
+  const compact = input.normalize("NFKC").replace(/[\s().-]/gu, "");
+  if (!/^\+?[0-9]{8,16}$/u.test(compact)) throw new Error("INVALID_PHONE");
+
+  let digits = compact.replace(/^\+/u, "");
+  if (digits.startsWith("00")) digits = digits.slice(2);
+
+  // Treat common Turkish mobile representations as the same E.164 number.
+  // Other numbers must already include an international prefix; we do not
+  // guess a country for arbitrary local numbers.
+  if (/^0?5\d{9}$/u.test(digits)) return `+90${digits.replace(/^0/u, "")}`;
+  if (/^905\d{9}$/u.test(digits)) return `+${digits}`;
+
+  if (!compact.startsWith("+") && !input.trim().startsWith("00")) {
+    throw new Error("INVALID_PHONE");
+  }
+  if (digits.length < 8 || digits.length > 15) throw new Error("INVALID_PHONE");
+  return `+${digits}`;
 }
 
 export function validateEmail(input: unknown): string {

@@ -15,7 +15,10 @@ export interface Appointment {
   first_name: string | null;
   last_name: string | null;
   email: string | null;
-  booking_ip: string | null;
+  booking_ip?: string | null;
+  device_id?: string | null;
+  device_id_retired?: boolean;
+  booking_source?: "public" | "admin";
   phone: string | null;
   service: ServiceType | null;
   email_verified: boolean;

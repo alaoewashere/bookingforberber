@@ -193,7 +193,7 @@ export default function AdminCalendar({ initialAppointments }: AdminCalendarProp
     if (!adminBookingSlot) return;
     const res = await fetch("/api/appointments/book", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "x-admin-booking": "1" },
       body: JSON.stringify({
         date: adminBookingSlot.date,
         time_slot: adminBookingSlot.time_slot,
@@ -420,7 +420,7 @@ export default function AdminCalendar({ initialAppointments }: AdminCalendarProp
               <select value={addTime} onChange={(e) => setAddTime(e.target.value)} dir="ltr" className="m-input !py-2">
                 {timeOptions.map((t) => <option key={t} value={t}>{formatTimeDisplay(t)}</option>)}
               </select>
-              <button type="submit" disabled={loading} className="m-btn-primary sm:col-span-2 lg:col-span-4">متابعة وتحقق البريد الإلكتروني</button>
+              <button type="submit" disabled={loading} className="m-btn-primary sm:col-span-2 lg:col-span-4">متابعة لإضافة الحجز</button>
             </form>
           )}
 

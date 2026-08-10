@@ -4,7 +4,7 @@ import { validateCustomerName, validateCustomerNameField, validateCustomerNamePa
 import { createServerClient } from "@/lib/supabase";
 
 const UPSERT_CONFLICT = "date,time_slot";
-const ADMIN_APPOINTMENT_COLUMNS = "id, date, time_slot, customer_name, first_name, last_name, email, email_verified, booking_ip, phone, phone_verified, service, status, notes, created_at, booked_at";
+const ADMIN_APPOINTMENT_COLUMNS = "id, date, time_slot, customer_name, first_name, last_name, email, email_verified, phone, phone_verified, service, status, notes, created_at, booked_at";
 const ADMIN_PAGE_SIZE = 1000;
 
 export function toPublicAppointment(appointment: Appointment) {
@@ -142,8 +142,11 @@ export type BookingPayload = {
   first_name?: string;
   last_name?: string;
   phone?: string;
+  normalized_phone?: string;
   email?: string;
   booking_ip?: string | null;
+  device_id?: string | null;
+  booking_source?: "public" | "admin";
   email_verified?: boolean;
   service?: ServiceType;
   status?: AppointmentStatus;
@@ -193,7 +196,11 @@ export async function upsertAppointment(
     email: status === "booked" ? email : null,
     email_verified: status === "booked" ? payload.email_verified ?? false : false,
     booking_ip: status === "booked" ? payload.booking_ip ?? null : null,
+    device_id: status === "booked" ? payload.device_id ?? null : null,
+    device_id_retired: false,
+    booking_source: status === "booked" ? payload.booking_source ?? "public" : "public",
     phone: status === "booked" ? phone : null,
+    normalized_phone: status === "booked" ? payload.normalized_phone ?? phone : null,
     service: status === "booked" ? service : null,
     phone_verified: status === "booked" ? payload.phone_verified ?? true : false,
     booked_at: status === "booked" ? payload.booked_at ?? new Date().toISOString() : null,
@@ -212,7 +219,10 @@ export async function upsertAppointment(
       .eq("status", "available")
       .select("*")
       .maybeSingle();
-    if (error) throw error;
+    if (error) {
+      if (error.code === "23505") throw new Error("DAILY_BOOKING_LIMIT");
+      throw error;
+    }
     if (!data) throw new Error("SLOT_UNAVAILABLE");
     return data as Appointment;
   }

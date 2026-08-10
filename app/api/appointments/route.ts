@@ -63,10 +63,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid input" }, { status: 400 });
   }
   // No actor, including an administrator, may create a reservation here.
-  // The verified /book route is the sole booking path and requires matching
-  // email OTP before it creates a row.
+  // The secure /book route is the sole booking path for customer data.
   if (status === "booked" || body.customer_name !== undefined || body.first_name !== undefined || body.last_name !== undefined || body.email !== undefined || body.phone !== undefined || body.service !== undefined) {
-    return NextResponse.json({ error: "Email verification is required for bookings" }, { status: 403 });
+    return NextResponse.json({ error: "Use the secure booking route" }, { status: 403 });
   }
   if (status !== "available" && status !== "blocked") {
     return NextResponse.json({ error: "Invalid input" }, { status: 400 });

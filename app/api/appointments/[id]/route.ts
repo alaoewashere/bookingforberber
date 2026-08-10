@@ -44,9 +44,9 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
 
     // This route controls slots only. Customer-controlled text can enter a
-    // booking exclusively through the verified /book route.
+    // booking exclusively through the secure /book route.
     if (body.status === "booked" || body.customer_name !== undefined || body.first_name !== undefined || body.last_name !== undefined || body.phone !== undefined || body.service !== undefined) {
-      return NextResponse.json({ error: "Email verification is required for booking changes" }, { status: 403 });
+      return NextResponse.json({ error: "Booking changes are not allowed" }, { status: 403 });
     }
 
     return NextResponse.json(existing);

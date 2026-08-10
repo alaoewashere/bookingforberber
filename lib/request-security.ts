@@ -22,10 +22,28 @@ function digest(value: string): string {
   return createHash("sha256").update(value).digest("hex");
 }
 
+function isPublicIp(ip: string): boolean {
+  const version = isIP(ip);
+  if (version === 4) {
+    const [first, second] = ip.split(".").map(Number);
+    return first !== 0 && first !== 10 && first !== 127
+      && !(first === 169 && second === 254)
+      && !(first === 172 && second >= 16 && second <= 31)
+      && !(first === 192 && second === 168);
+  }
+  if (version === 6) {
+    const normalized = ip.toLowerCase();
+    if (normalized === "::1" || normalized.startsWith("fc") || normalized.startsWith("fd") || normalized.startsWith("fe80:")) return false;
+    const mappedV4 = normalized.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/u)?.[1];
+    return mappedV4 ? isPublicIp(mappedV4) : true;
+  }
+  return false;
+}
+
 /**
  * Gets the network address supplied by the hosting proxy, never from JSON.
  * Vercel supplies x-vercel-forwarded-for; local development falls back to the
- * conventional proxy headers. Invalid/spoofed values are deliberately ignored.
+ * conventional proxy headers. Private/local and invalid values are ignored.
  */
 export function getRequestIp(request: Request): string | null {
   const candidates = [
@@ -36,32 +54,28 @@ export function getRequestIp(request: Request): string | null {
 
   for (const header of candidates) {
     const ip = header?.split(",")[0]?.trim() ?? "";
-    if (isIP(ip)) return ip;
+    if (isPublicIp(ip)) return ip;
   }
   return null;
 }
 
-export function getBookingRateLimitKeys(request: Request): string[] {
+export function getBookingRateLimitKeys(request: Request, deviceId?: string): string[] {
   const ip = getRequestIp(request) ?? "unknown";
-  const userAgent = request.headers.get("user-agent")?.slice(0, 256) ?? "unknown";
-  const cookieSession = request.headers.get("cookie")?.match(/(?:^|;\s*)booking_session=([^;]+)/u)?.[1] ?? "";
-  const session = (request.headers.get("x-booking-session")?.slice(0, 128) || cookieSession.slice(0, 128));
-  const keys = [`ip:${ip}`, `fingerprint:${ip}:${userAgent}`];
-  if (session) keys.push(`session:${session}`);
+  const keys = [`ip:${ip}`];
+  if (deviceId) keys.push(`device:${deviceId}`);
   return Array.from(new Set(keys.map(digest)));
-}
-
-/** A phone stays rate-limited even when its IP address changes. */
-export function getPhoneDailyRateLimitKey(phone: string): string {
-  return digest(`phone-daily:${phone}`);
 }
 
 /** Keep administrator password attempts separate from customer booking limits. */
 export function getAdminRateLimitKeys(request: Request): string[] {
   const ip = getRequestIp(request) ?? "unknown";
-  const userAgent = request.headers.get("user-agent")?.slice(0, 256) ?? "unknown";
-  return Array.from(new Set([`admin-ip:${ip}`, `admin-fingerprint:${ip}:${userAgent}`].map(digest)));
+  return [digest(`admin-ip:${ip}`)];
 }
 
-export const RATE_LIMIT_WINDOW_SECONDS = 3600;
-export const RATE_LIMIT_MAX_ATTEMPTS = 8;
+function positiveEnvInt(name: string, fallback: number): number {
+  const value = Number(process.env[name]);
+  return Number.isSafeInteger(value) && value > 0 ? value : fallback;
+}
+
+export const RATE_LIMIT_WINDOW_SECONDS = positiveEnvInt("BOOKING_IP_RATE_LIMIT_WINDOW_SECONDS", 60 * 60);
+export const RATE_LIMIT_MAX_ATTEMPTS = positiveEnvInt("BOOKING_IP_RATE_LIMIT_MAX", 8);

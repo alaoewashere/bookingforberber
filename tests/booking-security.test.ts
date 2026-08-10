@@ -2,9 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import fs from "node:fs";
 import { moderateCustomerText, validateCustomerName, validateCustomerNameField, validateCustomerNamePair } from "../lib/moderation/server";
-import { normalizeCustomerName, validateEmail, validateNameField, validateNameShape } from "../lib/moderation/normalize";
+import { normalizeCustomerName, validateEmail, validateNameField, validateNameShape, validatePhone } from "../lib/moderation/normalize";
 import { isValidDateParam, isWithinPublicBookingRange, normalizeTimeSlot } from "../lib/slots";
-import { getBookingRateLimitKeys, getPhoneDailyRateLimitKey, getRequestIp } from "../lib/request-security";
+import { getBookingRateLimitKeys, getRequestIp } from "../lib/request-security";
+import { getOrCreateBookingDevice } from "../lib/booking-device";
 
 test("normal Arabic, Turkish, and English names remain valid", () => {
   for (const name of ["محمد علي", "Çağrı Şahin", "Charlotte O'Neil"]) assert.equal(validateCustomerName(name), name);
@@ -70,6 +71,12 @@ test("date and time validation is strict and bounded", () => {
   assert.equal(isWithinPublicBookingRange("2026-11-09", new Date("2026-08-09T12:00:00")), false);
 });
 
+test("Turkish mobile number formats normalize to one E.164 identity", () => {
+  for (const phone of ["+90 555 123 45 67", "+905551234567", "05551234567", "5551234567"]) {
+    assert.equal(validatePhone(phone), "+905551234567");
+  }
+});
+
 test("email verification input is normalized and validated", () => {
   assert.equal(validateEmail("  Customer@Example.COM "), "customer@example.com");
   assert.throws(() => validateEmail("not-an-email"), /INVALID_EMAIL/);
@@ -87,34 +94,53 @@ test("RLS migration removes public appointment mutations and grants rate limit o
   assert.match(hardened, /char_length\(customer_name\) between 1 and 50/i);
 });
 
-test("booking IPs are extracted from trusted proxy headers and phone limits survive IP changes", () => {
+test("booking IPs are extracted from trusted proxy headers without browser fingerprinting", () => {
   const request = new Request("https://booking.example/api/appointments/book", {
     headers: {
-      "x-vercel-forwarded-for": "203.0.113.42",
-      "x-forwarded-for": "198.51.100.18",
+      "x-vercel-forwarded-for": "8.8.8.8",
+      "x-forwarded-for": "1.1.1.1",
     },
   });
-  assert.equal(getRequestIp(request), "203.0.113.42");
+  assert.equal(getRequestIp(request), "8.8.8.8");
   assert.equal(getRequestIp(new Request("https://booking.example", { headers: { "x-forwarded-for": "not-an-ip" } })), null);
-  assert.equal(getPhoneDailyRateLimitKey("+905551234567"), getPhoneDailyRateLimitKey("+905551234567"));
-  assert.notEqual(getPhoneDailyRateLimitKey("+905551234567"), getPhoneDailyRateLimitKey("+905551234568"));
   assert.notDeepEqual(
     getBookingRateLimitKeys(request),
-    getBookingRateLimitKeys(new Request("https://booking.example", { headers: { "x-vercel-forwarded-for": "203.0.113.43" } }))
+    getBookingRateLimitKeys(new Request("https://booking.example", { headers: { "x-vercel-forwarded-for": "9.9.9.9" } }))
   );
+  assert.equal(getRequestIp(new Request("https://booking.example", { headers: { "x-vercel-forwarded-for": "192.168.1.10" } })), null);
+  assert.doesNotMatch(getBookingRateLimitKeys.toString(), /user-agent|fingerprint/i);
+});
+
+test("booking device IDs are random signed cookie values, not JSON input", () => {
+  process.env.BOOKING_DEVICE_SECRET = "test-device-cookie-secret";
+  const first = getOrCreateBookingDevice(new Request("https://booking.example"));
+  assert.match(first.id, /^[0-9a-f-]{36}$/i);
+  assert.equal(first.isNew, true);
+  const again = getOrCreateBookingDevice(new Request("https://booking.example", { headers: { cookie: `booking_device=${first.cookieValue}` } }));
+  assert.equal(again.id, first.id);
+  assert.equal(again.isNew, false);
+  const forged = getOrCreateBookingDevice(new Request("https://booking.example", { headers: { cookie: "booking_device=550e8400-e29b-41d4-a716-446655440000.bad" } }));
+  assert.notEqual(forged.id, "550e8400-e29b-41d4-a716-446655440000");
 });
 
 test("booking IPs are private, persisted, and excluded from the admin UI", () => {
-  const migration = fs.readFileSync(new URL("../supabase/migrations/20260810102744_record_booking_ip.sql", import.meta.url), "utf8");
+  const migration = fs.readFileSync(new URL("../supabase/migrations/20260810105351_add_booking_identity_protection.sql", import.meta.url), "utf8");
   const route = fs.readFileSync(new URL("../app/api/appointments/book/route.ts", import.meta.url), "utf8");
   const appointments = fs.readFileSync(new URL("../lib/appointments.ts", import.meta.url), "utf8");
   const adminCalendar = fs.readFileSync(new URL("../components/AdminCalendar.tsx", import.meta.url), "utf8");
-  assert.match(migration, /booking_ip inet/i);
-  assert.match(migration, /revoke select \(booking_ip\) on public\.appointments from anon, authenticated/i);
+  const bootstrapRoute = fs.readFileSync(new URL("../app/api/booking-device/route.ts", import.meta.url), "utf8");
+  assert.match(migration, /device_id uuid/i);
+  assert.match(migration, /appointments_one_booked_phone_per_day_idx/i);
+  assert.match(migration, /appointments_one_public_device_per_day_idx/i);
+  assert.match(migration, /revoke all on table public\.appointments from anon, authenticated/i);
+  assert.match(migration, /purge_booking_abuse_identifiers/i);
   assert.match(route, /booking_ip: getRequestIp\(request\)/);
-  assert.match(route, /PHONE_DAILY_MAX_BOOKINGS = 1/);
+  assert.match(route, /normalized_phone: normalizedPhone/);
+  assert.match(route, /getOrCreateBookingDevice/);
+  assert.doesNotMatch(route, /device_id.*body|body.*device_id/);
   assert.match(appointments, /booking_ip/);
   assert.doesNotMatch(adminCalendar, /(?:row|a)\.booking_ip/);
+  assert.match(bootstrapRoute, /setBookingDeviceCookie/);
   assert.doesNotMatch(appointments.match(/export function toPublicAppointment[\s\S]*?\n}/)?.[0] ?? "", /booking_ip/);
 });
 
@@ -150,7 +176,17 @@ test("public booking accepts structured names and a phone number without email",
   assert.match(route, /PUBLIC_BOOKING_KEYS = \["date", "time_slot", "first_name", "last_name"/);
   assert.doesNotMatch(route, /PUBLIC_BOOKING_KEYS[^\n]*customer_name/);
   assert.doesNotMatch(route, /"email"/);
+  assert.doesNotMatch(route, /"device_id"|"booking_ip"/);
   assert.match(route, /validateCustomerNamePair/);
+});
+
+test("daily identity conflicts are rejected atomically before a second booking is confirmed", () => {
+  const appointments = fs.readFileSync(new URL("../lib/appointments.ts", import.meta.url), "utf8");
+  const route = fs.readFileSync(new URL("../app/api/appointments/book/route.ts", import.meta.url), "utf8");
+  assert.match(appointments, /error\.code === "23505"/);
+  assert.match(appointments, /DAILY_BOOKING_LIMIT/);
+  assert.match(appointments, /normalized_phone: status === "booked" \? payload\.normalized_phone \?\? phone : null/);
+  assert.match(route, /يمكنك حجز موعد واحد فقط في اليوم/);
 });
 
 test("public clients never receive customer names and slot updates reject text", () => {
@@ -159,7 +195,7 @@ test("public clients never receive customer names and slot updates reject text",
   const updateRoute = fs.readFileSync(new URL("../app/api/appointments/[id]/route.ts", import.meta.url), "utf8");
   assert.match(appointments, /customer_name: null/);
   assert.doesNotMatch(publicPage, /slot\.customer_name/);
-  assert.match(updateRoute, /Email verification is required for booking changes/);
+  assert.match(updateRoute, /Booking changes are not allowed/);
 });
 
 test("admin sessions are signed and all bookings require the verified booking route", () => {
@@ -181,7 +217,7 @@ test("admin sessions are signed and all bookings require the verified booking ro
   assert.match(loginStart, /getAdminRateLimitKeys/);
   assert.match(loginStart, /ADMIN_LOGIN_MAX_ATTEMPTS = 20/);
   assert.doesNotMatch(shell, /href="\/admin"/);
-  assert.match(adminCreate, /Email verification is required for bookings/);
+  assert.match(adminCreate, /Use the secure booking route/);
   assert.match(adminCalendar, /<BookingModal/);
   assert.match(adminCalendar, /"\/api\/appointments\/book"/);
   assert.doesNotMatch(adminCalendar, /requireEmailVerification=\{false\}/);
