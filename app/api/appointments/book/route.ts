@@ -3,10 +3,12 @@ import { toPublicAppointment, upsertAppointment } from "@/lib/appointments";
 import { isValidDateParam, isWithinPublicBookingRange, normalizeTimeSlot } from "@/lib/slots";
 import { validateCustomerNamePair, validatePhone, validateService } from "@/lib/moderation/server";
 import { createServerClient } from "@/lib/supabase";
-import { getBookingRateLimitKeys, hasOnlyKeys, RATE_LIMIT_MAX_ATTEMPTS, RATE_LIMIT_WINDOW_SECONDS, readJsonObject } from "@/lib/request-security";
+import { getBookingRateLimitKeys, getPhoneDailyRateLimitKey, getRequestIp, hasOnlyKeys, RATE_LIMIT_MAX_ATTEMPTS, RATE_LIMIT_WINDOW_SECONDS, readJsonObject } from "@/lib/request-security";
 import { randomBytes } from "node:crypto";
 
 const PUBLIC_BOOKING_KEYS = ["date", "time_slot", "first_name", "last_name", "phone", "service"] as const;
+const PHONE_DAILY_WINDOW_SECONDS = 60 * 60 * 24;
+const PHONE_DAILY_MAX_BOOKINGS = 1;
 
 export async function POST(request: Request) {
   try {
@@ -45,10 +47,19 @@ export async function POST(request: Request) {
     }
 
     const supabase = createServerClient();
-    for (const key of getBookingRateLimitKeys(request, normalizedPhone)) {
+    for (const key of getBookingRateLimitKeys(request)) {
       const { data, error } = await supabase.rpc("consume_booking_rate_limit", { p_key: key, p_window_seconds: RATE_LIMIT_WINDOW_SECONDS, p_max_attempts: RATE_LIMIT_MAX_ATTEMPTS });
       if (error) throw error;
       if (data !== true) return NextResponse.json({ error: "المحاولات كثيرة، حاول لاحقاً." }, { status: 429 });
+    }
+    const phoneLimit = await supabase.rpc("consume_booking_rate_limit", {
+      p_key: getPhoneDailyRateLimitKey(normalizedPhone),
+      p_window_seconds: PHONE_DAILY_WINDOW_SECONDS,
+      p_max_attempts: PHONE_DAILY_MAX_BOOKINGS,
+    });
+    if (phoneLimit.error) throw phoneLimit.error;
+    if (phoneLimit.data !== true) {
+      return NextResponse.json({ error: "يمكن حجز موعد واحد فقط لكل رقم هاتف خلال 24 ساعة." }, { status: 429 });
     }
 
     const appointment = await upsertAppointment({
@@ -58,6 +69,7 @@ export async function POST(request: Request) {
       last_name: normalizedLastName,
       phone: normalizedPhone,
       service,
+      booking_ip: getRequestIp(request),
       email_verified: false,
       phone_verified: false,
       status: "booked",

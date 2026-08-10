@@ -4,7 +4,7 @@ import { validateCustomerName, validateCustomerNameField, validateCustomerNamePa
 import { createServerClient } from "@/lib/supabase";
 
 const UPSERT_CONFLICT = "date,time_slot";
-const ADMIN_APPOINTMENT_COLUMNS = "id, date, time_slot, customer_name, first_name, last_name, email, email_verified, phone, phone_verified, service, status, notes, created_at, booked_at";
+const ADMIN_APPOINTMENT_COLUMNS = "id, date, time_slot, customer_name, first_name, last_name, email, email_verified, booking_ip, phone, phone_verified, service, status, notes, created_at, booked_at";
 const ADMIN_PAGE_SIZE = 1000;
 
 export function toPublicAppointment(appointment: Appointment) {
@@ -143,6 +143,7 @@ export type BookingPayload = {
   last_name?: string;
   phone?: string;
   email?: string;
+  booking_ip?: string | null;
   email_verified?: boolean;
   service?: ServiceType;
   status?: AppointmentStatus;
@@ -191,6 +192,7 @@ export async function upsertAppointment(
     last_name: status === "booked" ? last_name : null,
     email: status === "booked" ? email : null,
     email_verified: status === "booked" ? payload.email_verified ?? false : false,
+    booking_ip: status === "booked" ? payload.booking_ip ?? null : null,
     phone: status === "booked" ? phone : null,
     service: status === "booked" ? service : null,
     phone_verified: status === "booked" ? payload.phone_verified ?? true : false,

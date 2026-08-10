@@ -177,6 +177,7 @@ export default function AdminCalendar({ initialAppointments }: AdminCalendarProp
       first_name: null,
       last_name: null,
       email: null,
+      booking_ip: null,
       phone: null,
       service: null,
       email_verified: false,
@@ -378,6 +379,9 @@ export default function AdminCalendar({ initialAppointments }: AdminCalendarProp
                             <span style={{ ...F, fontWeight: 300, color: "var(--m-cream-2)", fontSize: "0.82rem", flexShrink: 0 }} dir="ltr">
                               {meta?.phone || "—"}
                             </span>
+                            <span style={{ ...F, fontWeight: 300, color: "var(--m-muted)", fontSize: "0.72rem", flexShrink: 0 }} dir="ltr">
+                              IP: {a.booking_ip ?? "—"}
+                            </span>
                             <span className="m-pill" style={{ flexShrink: 0 }}>{serviceLabelAr(meta?.service)}</span>
                             <div className="flex gap-1 flex-shrink-0">
                               <button type="button"
@@ -465,10 +469,10 @@ export default function AdminCalendar({ initialAppointments }: AdminCalendarProp
                 <p style={{ ...F, fontWeight: 300, color: "var(--m-muted)", fontSize: "0.85rem" }}>{ar.admin.noDayAppointments}</p>
               ) : (
                 <div className="m-table-wrap">
-                  <table className="m-table min-w-[420px]">
+                  <table className="m-table min-w-[520px]">
                     <thead>
                       <tr>
-                        {[ar.admin.time, ar.admin.customer, ar.admin.phone, ar.admin.service, ar.admin.status, ar.admin.actions].map((h) => (
+                        {[ar.admin.time, ar.admin.customer, ar.admin.phone, ar.admin.ipAddress, ar.admin.service, ar.admin.status, ar.admin.actions].map((h) => (
                           <th key={h}>{h}</th>
                         ))}
                       </tr>
@@ -483,6 +487,7 @@ export default function AdminCalendar({ initialAppointments }: AdminCalendarProp
                             </td>
                             <td>{customerCell(row)}</td>
                             <td style={{ ...F, color: "var(--m-cream-2)", fontSize: "0.82rem" }} dir="ltr">{meta?.phone || "—"}</td>
+                            <td style={{ ...F, color: "var(--m-muted)", fontSize: "0.75rem" }} dir="ltr">{row.booking_ip ?? "—"}</td>
                             <td><span className="m-pill">{serviceLabelAr(meta?.service)}</span></td>
                             <td>{statusBadge(row.status)}</td>
                             <td>{rowActions(row)}</td>

@@ -4,6 +4,7 @@ import fs from "node:fs";
 import { moderateCustomerText, validateCustomerName, validateCustomerNameField, validateCustomerNamePair } from "../lib/moderation/server";
 import { normalizeCustomerName, validateEmail, validateNameField, validateNameShape } from "../lib/moderation/normalize";
 import { isValidDateParam, isWithinPublicBookingRange, normalizeTimeSlot } from "../lib/slots";
+import { getBookingRateLimitKeys, getPhoneDailyRateLimitKey, getRequestIp } from "../lib/request-security";
 
 test("normal Arabic, Turkish, and English names remain valid", () => {
   for (const name of ["محمد علي", "Çağrı Şahin", "Charlotte O'Neil"]) assert.equal(validateCustomerName(name), name);
@@ -84,6 +85,37 @@ test("RLS migration removes public appointment mutations and grants rate limit o
   assert.match(hardened, /revoke select on public\.appointments from anon, authenticated/i);
   assert.match(hardened, /phone_verified boolean not null default false/i);
   assert.match(hardened, /char_length\(customer_name\) between 1 and 50/i);
+});
+
+test("booking IPs are extracted from trusted proxy headers and phone limits survive IP changes", () => {
+  const request = new Request("https://booking.example/api/appointments/book", {
+    headers: {
+      "x-vercel-forwarded-for": "203.0.113.42",
+      "x-forwarded-for": "198.51.100.18",
+    },
+  });
+  assert.equal(getRequestIp(request), "203.0.113.42");
+  assert.equal(getRequestIp(new Request("https://booking.example", { headers: { "x-forwarded-for": "not-an-ip" } })), null);
+  assert.equal(getPhoneDailyRateLimitKey("+905551234567"), getPhoneDailyRateLimitKey("+905551234567"));
+  assert.notEqual(getPhoneDailyRateLimitKey("+905551234567"), getPhoneDailyRateLimitKey("+905551234568"));
+  assert.notDeepEqual(
+    getBookingRateLimitKeys(request),
+    getBookingRateLimitKeys(new Request("https://booking.example", { headers: { "x-vercel-forwarded-for": "203.0.113.43" } }))
+  );
+});
+
+test("booking IPs are private, persisted, and shown only to administrators", () => {
+  const migration = fs.readFileSync(new URL("../supabase/migrations/20260810102744_record_booking_ip.sql", import.meta.url), "utf8");
+  const route = fs.readFileSync(new URL("../app/api/appointments/book/route.ts", import.meta.url), "utf8");
+  const appointments = fs.readFileSync(new URL("../lib/appointments.ts", import.meta.url), "utf8");
+  const adminCalendar = fs.readFileSync(new URL("../components/AdminCalendar.tsx", import.meta.url), "utf8");
+  assert.match(migration, /booking_ip inet/i);
+  assert.match(migration, /revoke select \(booking_ip\) on public\.appointments from anon, authenticated/i);
+  assert.match(route, /booking_ip: getRequestIp\(request\)/);
+  assert.match(route, /PHONE_DAILY_MAX_BOOKINGS = 1/);
+  assert.match(appointments, /booking_ip/);
+  assert.match(adminCalendar, /row\.booking_ip/);
+  assert.doesNotMatch(appointments.match(/export function toPublicAppointment[\s\S]*?\n}/)?.[0] ?? "", /booking_ip/);
 });
 
 test("server moderation is not imported by the booking modal", () => {
