@@ -104,7 +104,7 @@ test("booking IPs are extracted from trusted proxy headers and phone limits surv
   );
 });
 
-test("booking IPs are private, persisted, and shown only to administrators", () => {
+test("booking IPs are private, persisted, and excluded from the admin UI", () => {
   const migration = fs.readFileSync(new URL("../supabase/migrations/20260810102744_record_booking_ip.sql", import.meta.url), "utf8");
   const route = fs.readFileSync(new URL("../app/api/appointments/book/route.ts", import.meta.url), "utf8");
   const appointments = fs.readFileSync(new URL("../lib/appointments.ts", import.meta.url), "utf8");
@@ -114,7 +114,7 @@ test("booking IPs are private, persisted, and shown only to administrators", () 
   assert.match(route, /booking_ip: getRequestIp\(request\)/);
   assert.match(route, /PHONE_DAILY_MAX_BOOKINGS = 1/);
   assert.match(appointments, /booking_ip/);
-  assert.match(adminCalendar, /row\.booking_ip/);
+  assert.doesNotMatch(adminCalendar, /(?:row|a)\.booking_ip/);
   assert.doesNotMatch(appointments.match(/export function toPublicAppointment[\s\S]*?\n}/)?.[0] ?? "", /booking_ip/);
 });
 

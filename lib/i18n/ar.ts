@@ -116,7 +116,6 @@ export const ar = {
     time: "الوقت",
     customer: "العميل",
     phone: "الهاتف",
-    ipAddress: "عنوان IP",
     service: "الخدمة",
     status: "الحالة",
     actions: "إجراءات",
