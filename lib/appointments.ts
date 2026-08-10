@@ -1,5 +1,5 @@
 import type { Appointment, AppointmentStatus, ServiceType } from "@/lib/types";
-import { generateTimeSlots, isValidDateParam, isWithinPublicBookingRange, normalizeTimeSlot } from "@/lib/slots";
+import { generateTimeSlots, isValidDateParam, normalizeTimeSlot } from "@/lib/slots";
 import { validateCustomerName, validateCustomerNameField, validateCustomerNamePair, validateEmail, validatePhone, validateService } from "@/lib/moderation/server";
 import { createServerClient } from "@/lib/supabase";
 
@@ -223,40 +223,6 @@ export async function upsertAppointment(
 
   if (error) throw error;
   return data as Appointment;
-}
-
-export async function bookAppointment(
-  date: string,
-  time_slot: string,
-  first_name: string,
-  last_name: string,
-  email: string,
-  phone?: string,
-  service?: ServiceType,
-  options: { emailVerified?: boolean } = {}
-): Promise<Appointment> {
-  if (!isWithinPublicBookingRange(date)) throw new Error("INVALID_BOOKING");
-  const normalizedSlot = normalizeTimeSlot(time_slot);
-  if (!normalizedSlot) throw new Error("INVALID_BOOKING");
-  const { firstName: normalizedFirstName, lastName: normalizedLastName } = validateCustomerNamePair(first_name, last_name);
-  const normalizedEmail = validateEmail(email);
-  const normalizedPhone = validatePhone(phone ?? "");
-  const normalizedService = validateService(service ?? "hair");
-  if (options.emailVerified !== true) throw new Error("EMAIL_NOT_VERIFIED");
-  const supabase = createServerClient();
-  const { data, error } = await supabase.rpc("book_appointment_with_email_cooldown", {
-    p_date: date,
-    p_time_slot: normalizedSlot,
-    p_first_name: normalizedFirstName,
-    p_last_name: normalizedLastName,
-    p_email: normalizedEmail,
-    p_phone: normalizedPhone,
-    p_service: normalizedService,
-  });
-  if (error) throw error;
-  const appointment = Array.isArray(data) ? data[0] : data;
-  if (!appointment) throw new Error("SLOT_UNAVAILABLE");
-  return appointment as Appointment;
 }
 
 export async function clearAppointmentSlot(

@@ -90,17 +90,14 @@ export default function HomeClient() {
     });
   }
 
-  async function handleBook(firstName: string, lastName: string, email: string, phone: string, service: ServiceType, accessToken: string) {
+  async function handleBook(firstName: string, lastName: string, phone: string, service: ServiceType) {
     if (!selectedSlot) return;
     const res = await fetch("/api/appointments/book", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         date: selectedSlot.date, time_slot: selectedSlot.time_slot,
-        first_name: firstName, last_name: lastName, email, phone, service,
+        first_name: firstName, last_name: lastName, phone, service,
       }),
     });
     const json = await res.json();
@@ -111,9 +108,7 @@ export default function HomeClient() {
           ? t.booking.nameOneWord
           : serverError === "الرجاء إدخال اسم صحيح." || serverError === "يرجى إدخال اسم صحيح."
             ? t.booking.nameInvalid
-            : serverError === "لقد استخدمت هذا البريد الإلكتروني اليوم. يمكنك استخدامه بعد يومين."
-              ? t.booking.emailCooldown
-              : serverError === "هذا الموعد لم يعد متاحاً."
+            : serverError === "هذا الموعد لم يعد متاحاً."
                 ? t.booking.alreadyBooked
                 : serverError || t.booking.saveFailed;
       throw new Error(localizedError);

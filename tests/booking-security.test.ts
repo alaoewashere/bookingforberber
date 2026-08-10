@@ -95,19 +95,16 @@ test("booking path is atomic and protected against duplicate slots", () => {
   const migration = fs.readFileSync(new URL("../supabase/migrations/001_create_appointments.sql", import.meta.url), "utf8");
   const appointments = fs.readFileSync(new URL("../lib/appointments.ts", import.meta.url), "utf8");
   assert.match(migration, /constraint unique_date_time unique \(date, time_slot\)/i);
-  assert.match(appointments, /rpc\("book_appointment_with_email_cooldown"/);
-  assert.match(appointments, /rpc\("book_appointment_with_email_cooldown"/);
+  assert.match(appointments, /\.eq\("status", "available"\)/);
+  assert.match(appointments, /throw new Error\("SLOT_UNAVAILABLE"\)/);
   assert.doesNotMatch(appointments, /from\("appointments"\)\s*\.insert\(/);
 });
 
-test("email OTP is required before public booking", () => {
+test("public booking does not require email or OTP", () => {
   const route = fs.readFileSync(new URL("../app/api/appointments/book/route.ts", import.meta.url), "utf8");
-  const migration = fs.readFileSync(new URL("../supabase/migrations/20260809190000_email_booking_verification.sql", import.meta.url), "utf8");
-  assert.match(route, /getAuthenticatedEmail/);
-  assert.match(route, /authorization/);
-  assert.match(route, /يجب تأكيد البريد الإلكتروني أولاً/);
-  assert.match(migration, /email_verified boolean not null default false/i);
-  assert.match(migration, /add column if not exists email text/i);
+  assert.doesNotMatch(route, /getAuthenticatedEmail|authorization|validateEmail/);
+  assert.match(route, /email_verified: false/);
+  assert.match(route, /upsertAppointment/);
 });
 
 test("admin appointments load beyond Supabase's default 1,000-row page", () => {
@@ -116,12 +113,11 @@ test("admin appointments load beyond Supabase's default 1,000-row page", () => {
   assert.match(appointments, /\.range\(offset, offset \+ ADMIN_PAGE_SIZE - 1\)/);
 });
 
-test("public booking accepts only first_name and last_name", () => {
+test("public booking accepts structured names and a phone number without email", () => {
   const route = fs.readFileSync(new URL("../app/api/appointments/book/route.ts", import.meta.url), "utf8");
   assert.match(route, /PUBLIC_BOOKING_KEYS = \["date", "time_slot", "first_name", "last_name"/);
   assert.doesNotMatch(route, /PUBLIC_BOOKING_KEYS[^\n]*customer_name/);
-  assert.match(route, /EMAIL_COOLDOWN/);
-  assert.match(route, /يمكنك استخدامه بعد يومين/);
+  assert.doesNotMatch(route, /"email"/);
   assert.match(route, /validateCustomerNamePair/);
 });
 
@@ -172,16 +168,6 @@ test("an administrator can reopen a closed slot without changing bookings", () =
   assert.match(calendar, /status: "available"/);
   assert.match(calendar, /row\.status === "blocked"/);
   assert.match(calendar, /ar\.admin\.open/);
-});
-
-test("email cooldown is atomic and based on booking time", () => {
-  const appointments = fs.readFileSync(new URL("../lib/appointments.ts", import.meta.url), "utf8");
-  const migration = fs.readFileSync(new URL("../supabase/migrations/20260809165530_atomic_email_booking_cooldown.sql", import.meta.url), "utf8");
-  assert.match(appointments, /book_appointment_with_email_cooldown/);
-  assert.match(migration, /add column if not exists booked_at timestamptz/i);
-  assert.match(migration, /pg_advisory_xact_lock/);
-  assert.match(migration, /booked_at >= now\(\) - interval '2 days'/i);
-  assert.match(migration, /grant execute on function public\.book_appointment_with_email_cooldown[\s\S]*to service_role/i);
 });
 
 test("staff-created bookings cannot overwrite an occupied slot", () => {
