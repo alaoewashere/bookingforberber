@@ -6,12 +6,14 @@ import { createServerClient } from "@/lib/supabase";
 import { getBookingRateLimitKeys, getRequestIp, hasOnlyKeys, RATE_LIMIT_MAX_ATTEMPTS, RATE_LIMIT_WINDOW_SECONDS, readJsonObject } from "@/lib/request-security";
 import { getOrCreateBookingDevice, setBookingDeviceCookie } from "@/lib/booking-device";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
+import { isBlockedIp } from "@/lib/blocked-ips";
 
 const PUBLIC_BOOKING_KEYS = ["date", "time_slot", "first_name", "last_name", "phone", "service"] as const;
 
 export async function POST(request: Request) {
   const adminBooking = request.headers.get("x-admin-booking") === "1" && await isAdminAuthenticated();
   const device = adminBooking ? null : getOrCreateBookingDevice(request);
+  const requestIp = getRequestIp(request);
   const respond = (body: unknown, init: ResponseInit) => {
     const response = NextResponse.json(body, init);
     if (device) setBookingDeviceCookie(response, device);
@@ -20,6 +22,10 @@ export async function POST(request: Request) {
 
   try {
     const body = await readJsonObject(request);
+    if (await isBlockedIp(requestIp)) {
+      console.warn("Blocked booking attempt", { category: "blocked_ip" });
+      return respond({ error: "لا يمكن إتمام الحجز. يرجى التواصل مع الحلاق." }, { status: 403 });
+    }
     if (!hasOnlyKeys(body, PUBLIC_BOOKING_KEYS)) {
       return respond({ error: "بيانات غير صالحة" }, { status: 400 });
     }
@@ -70,7 +76,7 @@ export async function POST(request: Request) {
       phone: normalizedPhone,
       normalized_phone: normalizedPhone,
       service,
-      booking_ip: getRequestIp(request),
+      booking_ip: requestIp,
       device_id: device?.id ?? null,
       booking_source: adminBooking ? "admin" : "public",
       email_verified: false,

@@ -134,7 +134,7 @@ test("booking IPs are private, persisted, and excluded from the admin UI", () =>
   assert.match(migration, /appointments_one_public_device_per_day_idx/i);
   assert.match(migration, /revoke all on table public\.appointments from anon, authenticated/i);
   assert.match(migration, /purge_booking_abuse_identifiers/i);
-  assert.match(route, /booking_ip: getRequestIp\(request\)/);
+  assert.match(route, /booking_ip: requestIp/);
   assert.match(route, /normalized_phone: normalizedPhone/);
   assert.match(route, /getOrCreateBookingDevice/);
   assert.doesNotMatch(route, /device_id.*body|body.*device_id/);
@@ -142,6 +142,26 @@ test("booking IPs are private, persisted, and excluded from the admin UI", () =>
   assert.doesNotMatch(adminCalendar, /(?:row|a)\.booking_ip/);
   assert.match(bootstrapRoute, /setBookingDeviceCookie/);
   assert.doesNotMatch(appointments.match(/export function toPublicAppointment[\s\S]*?\n}/)?.[0] ?? "", /booking_ip/);
+});
+
+test("server checks the blocklist before booking validation and never accepts client IP JSON", () => {
+  const route = fs.readFileSync(new URL("../app/api/appointments/book/route.ts", import.meta.url), "utf8");
+  const migration = fs.readFileSync(new URL("../supabase/migrations/20260812155138_create_blocked_ips.sql", import.meta.url), "utf8");
+  assert.match(route, /isBlockedIp\(requestIp\)/);
+  assert.match(route, /لا يمكن إتمام الحجز\. يرجى التواصل مع الحلاق/);
+  assert.match(route, /booking_ip: requestIp/);
+  assert.doesNotMatch(route, /body\.booking_ip|body\.ip_address/);
+  assert.match(migration, /create table if not exists public\.blocked_ips/i);
+  assert.match(migration, /159\.146\.21\.209/);
+  assert.match(migration, /enable row level security/i);
+  assert.match(migration, /revoke all on table public\.blocked_ips from public, anon, authenticated/i);
+});
+
+test("blocked IP management is admin-only", () => {
+  const route = fs.readFileSync(new URL("../app/api/admin/blocked-ips/route.ts", import.meta.url), "utf8");
+  assert.match(route, /isAdminAuthenticated/);
+  assert.match(route, /blocked_ips/);
+  assert.match(route, /normalizeIp/);
 });
 
 test("server moderation is not imported by the booking modal", () => {
